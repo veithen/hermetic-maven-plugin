@@ -58,7 +58,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
     private File outputFile;
 
-    @Parameter(property="nonHermeticTests")
+    @Parameter
     private boolean skip;
 
     @Override
