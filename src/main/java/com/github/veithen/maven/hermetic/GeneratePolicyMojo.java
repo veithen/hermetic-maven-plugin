@@ -66,10 +66,13 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         if (skip || project.getPackaging().equals("pom")) {
             return;
         }
+        outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
             writer.start();
             writer.writePermission(new FilePermission(new File(System.getProperty("java.home"), "-").getAbsolutePath(), "read"));
+            writer.writePermission(new FilePermission(new File(System.getProperty("maven.home"), "-").getAbsolutePath(), "read"));
+            writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
             writer.writePermission(new FilePermission(new File(session.getSettings().getLocalRepository(), "-").getAbsolutePath(), "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();
