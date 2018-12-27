@@ -96,6 +96,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             writer.writePermission(new MBeanPermission("*", "*"));
             writer.writePermission(new MBeanServerPermission("*"));
             writer.writePermission(new MBeanTrustPermission("*"));
+            writer.writePermission("javax.xml.bind.JAXBPermission", "*", null);
             writer.writePermission("javax.xml.ws.WebServicePermission", "publishEndpoint", null);
             writer.writePermission("org.osgi.framework.AdminPermission", "*", "*");
             writer.writePermission("org.osgi.framework.ServicePermission", "*", "register,get");
