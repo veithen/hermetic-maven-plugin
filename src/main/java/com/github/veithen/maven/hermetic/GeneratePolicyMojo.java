@@ -111,7 +111,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             buffer.append(argLine);
             buffer.append(" ");
         }
-        buffer.append("-Djava.security.manager -Djava.security.policy=");
+        // "==" sets the policy instead of adding additional permissions.
+        buffer.append("-Djava.security.manager -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
         props.setProperty("argLine", buffer.toString());
     }
