@@ -17,6 +17,10 @@
  * limitations under the License.
  * #L%
  */
+import static com.google.common.truth.Truth.assertThat;
+
+import java.io.File;
+
 import javax.xml.bind.JAXBContext;
 
 import org.junit.Test;
@@ -25,5 +29,11 @@ public class PermissionTest {
     @Test
     public void testJaxb() throws Exception {
         JAXBContext.newInstance(String.class);
+    }
+
+    @Test
+    public void testCreateTempFile() throws Exception {
+        File tempFile = File.createTempFile("test", null);
+        assertThat(tempFile.delete()).isTrue();
     }
 }

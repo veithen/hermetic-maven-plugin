@@ -84,8 +84,10 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 }
             }
             writer.writePermission(new FilePermission(new File(project.getBasedir(), "-").getAbsolutePath(), "read"));
-            writer.writePermission(new FilePermission(project.getBuild().getDirectory(), "read,write"));
-            writer.writePermission(new FilePermission(new File(project.getBuild().getDirectory(), "-").getAbsolutePath(), "read,write,delete"));
+            for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
+                writer.writePermission(new FilePermission(dir, "read,write"));
+                writer.writePermission(new FilePermission(new File(dir, "-").getAbsolutePath(), "read,write,delete"));
+            }
             writer.writePermission(new RuntimePermission("*"));
             writer.writePermission(new ManagementPermission("monitor"));
             writer.writePermission(new ReflectPermission("*"));
