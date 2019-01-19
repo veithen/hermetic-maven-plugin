@@ -30,8 +30,12 @@ import java.lang.reflect.ReflectPermission;
 import java.net.NetPermission;
 import java.net.SocketPermission;
 import java.security.SecurityPermission;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.util.PropertyPermission;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import javax.management.MBeanPermission;
 import javax.management.MBeanServerPermission;
@@ -70,10 +74,21 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
             writer.start();
-            writer.writePermission(new FilePermission(new File(System.getProperty("java.home"), "-").getAbsolutePath(), "read"));
-            writer.writePermission(new FilePermission(new File(System.getProperty("maven.home"), "-").getAbsolutePath(), "read"));
+            List<File> dirs = new ArrayList<>();
+            File javaHome = new File(System.getProperty("java.home"));
+            if (javaHome.getName().equals("jre")) {
+                javaHome = javaHome.getParentFile();
+            }
+            dirs.add(javaHome);
+            Stream.of(System.getProperty("java.ext.dirs").split(Pattern.quote(File.pathSeparator))).map(File::new).forEach(dirs::add);
+            dirs.add(new File(System.getProperty("maven.home")));
+            dirs.add(new File(session.getSettings().getLocalRepository()));
+            dirs.add(project.getBasedir());
+            for (File dir : dirs) {
+                writer.writePermission(new FilePermission(dir.getAbsolutePath(), "read"));
+                writer.writePermission(new FilePermission(new File(dir, "-").getAbsolutePath(), "read"));
+            }
             writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
-            writer.writePermission(new FilePermission(new File(session.getSettings().getLocalRepository(), "-").getAbsolutePath(), "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();
                 if (file != null) {
@@ -83,7 +98,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                     writer.writePermission(new FilePermission(attachedArtifact.getFile().getAbsolutePath(), "read"));
                 }
             }
-            writer.writePermission(new FilePermission(new File(project.getBasedir(), "-").getAbsolutePath(), "read"));
             for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
                 writer.writePermission(new FilePermission(dir, "read,write"));
                 writer.writePermission(new FilePermission(new File(dir, "-").getAbsolutePath(), "read,write,delete"));
