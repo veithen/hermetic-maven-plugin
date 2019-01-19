@@ -80,7 +80,10 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 javaHome = javaHome.getParentFile();
             }
             dirs.add(javaHome);
-            Stream.of(System.getProperty("java.ext.dirs").split(Pattern.quote(File.pathSeparator))).map(File::new).forEach(dirs::add);
+            String extDirs = System.getProperty("java.ext.dirs");
+            if (extDirs != null) {
+                Stream.of(extDirs.split(Pattern.quote(File.pathSeparator))).map(File::new).forEach(dirs::add);
+            }
             dirs.add(new File(System.getProperty("maven.home")));
             dirs.add(new File(session.getSettings().getLocalRepository()));
             dirs.add(project.getBasedir());
