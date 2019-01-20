@@ -65,6 +65,12 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter
     private boolean skip;
 
+    @Parameter
+    private boolean debug;
+
+    @Parameter
+    private boolean allowExec;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip || project.getPackaging().equals("pom")) {
@@ -119,6 +125,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             writer.writePermission("javax.xml.ws.WebServicePermission", "publishEndpoint", null);
             writer.writePermission("org.osgi.framework.AdminPermission", "*", "*");
             writer.writePermission("org.osgi.framework.ServicePermission", "*", "register,get");
+            if (allowExec) {
+                writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
+            }
             writer.end();
         } catch (IOException ex) {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
@@ -133,6 +142,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         // "==" sets the policy instead of adding additional permissions.
         buffer.append("-Djava.security.manager -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
+        if (debug) {
+            buffer.append(" -Djava.security.debug=access,failure");
+        }
         props.setProperty("argLine", buffer.toString());
     }
 }

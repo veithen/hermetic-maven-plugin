@@ -34,6 +34,9 @@
                         <goals>
                             <goal>generate-policy</goal>
                         </goals>
+                        <configuration>
+                            <allowExec>true</allowExec>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
