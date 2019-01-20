@@ -62,14 +62,20 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
     private File outputFile;
 
-    @Parameter
+    @Parameter(defaultValue="false", required=true)
     private boolean skip;
 
-    @Parameter
+    @Parameter(defaultValue="false", required=true)
     private boolean debug;
 
-    @Parameter
+    @Parameter(defaultValue="false", required=true)
     private boolean allowExec;
+
+    @Parameter(defaultValue="argLine", required=true)
+    private String property;
+
+    @Parameter(defaultValue="true", required=true)
+    private boolean append;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -133,11 +139,13 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
         Properties props = project.getProperties();
-        String argLine = props.getProperty("argLine");
         StringBuilder buffer = new StringBuilder();
-        if (argLine != null) {
-            buffer.append(argLine);
-            buffer.append(" ");
+        if (append) {
+            String currentValue = props.getProperty(property);
+            if (currentValue != null) {
+                buffer.append(currentValue);
+                buffer.append(" ");
+            }
         }
         // "==" sets the policy instead of adding additional permissions.
         buffer.append("-Djava.security.manager -Djava.security.policy==");
@@ -145,6 +153,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         if (debug) {
             buffer.append(" -Djava.security.debug=access,failure");
         }
-        props.setProperty("argLine", buffer.toString());
+        props.setProperty(property, buffer.toString());
     }
 }
