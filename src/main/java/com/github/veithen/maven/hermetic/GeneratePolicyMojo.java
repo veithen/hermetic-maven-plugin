@@ -77,6 +77,21 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue="true", required=true)
     private boolean append;
 
+    private static File getJavaHome() {
+        File javaHome = new File(System.getProperty("java.home"));
+        return javaHome.getName().equals("jre") ? javaHome.getParentFile() : javaHome;
+    }
+
+    private static boolean isDescendant(File dir, File path) {
+        do {
+            if (path.equals(dir)) {
+                return true;
+            }
+            path = path.getParentFile();
+        } while (path != null);
+        return false;
+    }
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip || project.getPackaging().equals("pom")) {
@@ -87,14 +102,14 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             PolicyWriter writer = new PolicyWriter(out);
             writer.start();
             List<File> dirs = new ArrayList<>();
-            File javaHome = new File(System.getProperty("java.home"));
-            if (javaHome.getName().equals("jre")) {
-                javaHome = javaHome.getParentFile();
-            }
+            File javaHome = getJavaHome();
             dirs.add(javaHome);
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
-                Stream.of(extDirs.split(Pattern.quote(File.pathSeparator))).map(File::new).forEach(dirs::add);
+                Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
+                        .map(File::new)
+                        .filter(dir -> !isDescendant(javaHome, dir))
+                        .forEach(dirs::add);
             }
             dirs.add(new File(System.getProperty("maven.home")));
             dirs.add(new File(session.getSettings().getLocalRepository()));
