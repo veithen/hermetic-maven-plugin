@@ -30,11 +30,11 @@ import java.lang.reflect.ReflectPermission;
 import java.net.NetPermission;
 import java.net.SocketPermission;
 import java.security.SecurityPermission;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.management.MBeanPermission;
@@ -101,23 +101,21 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
             writer.start();
-            List<File> dirs = new ArrayList<>();
             File javaHome = getJavaHome();
-            dirs.add(javaHome);
+            writer.generateDirReadPermissions(javaHome, true, true);
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
-                Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
+                List<File> dirs = Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
                         .map(File::new)
                         .filter(dir -> !isDescendant(javaHome, dir))
-                        .forEach(dirs::add);
+                        .collect(Collectors.toList());
+                for (File dir : dirs) {
+                    writer.generateDirReadPermissions(dir, false, true);
+                }
             }
-            dirs.add(new File(System.getProperty("maven.home")));
-            dirs.add(new File(session.getSettings().getLocalRepository()));
-            dirs.add(project.getBasedir());
-            for (File dir : dirs) {
-                writer.writePermission(new FilePermission(dir.getAbsolutePath(), "read"));
-                writer.writePermission(new FilePermission(new File(dir, "-").getAbsolutePath(), "read"));
-            }
+            writer.generateDirReadPermissions(new File(System.getProperty("maven.home")), true, false);
+            writer.generateDirReadPermissions(new File(session.getSettings().getLocalRepository()), true, false);
+            writer.generateDirReadPermissions(project.getBasedir(), true, false);
             writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();

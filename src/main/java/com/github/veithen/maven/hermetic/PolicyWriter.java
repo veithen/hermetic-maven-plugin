@@ -19,6 +19,8 @@
  */
 package com.github.veithen.maven.hermetic;
 
+import java.io.File;
+import java.io.FilePermission;
 import java.io.IOException;
 import java.io.Writer;
 import java.security.Permission;
@@ -53,6 +55,30 @@ final class PolicyWriter {
     void writePermission(Permission permission) throws IOException {
         String actions = permission.getActions();
         writePermission(permission.getClass().getName(), permission.getName(), actions.isEmpty() ? null : actions);
+    }
+
+    private void generateSymlinkPermissions(File dir, boolean recursive) throws IOException {
+        for (File file : dir.listFiles()) {
+            if (file.isDirectory()) {
+                if (recursive) {
+                    generateSymlinkPermissions(file, true);
+                }
+            } else {
+                File canonicalFile = file.getCanonicalFile();
+                if (!canonicalFile.equals(file)) {
+                    writePermission(new FilePermission(canonicalFile.toString(), "read"));
+                }
+            }
+        }
+    }
+
+    void generateDirReadPermissions(File dir, boolean recursive, boolean symlinks) throws IOException {
+        dir = dir.getAbsoluteFile();
+        writePermission(new FilePermission(dir.toString(), "read"));
+        if (dir.exists()) {
+            writePermission(new FilePermission(new File(dir, recursive ? "-" : "*").toString(), symlinks ? "read,readlink" : "read"));
+            generateSymlinkPermissions(dir, recursive);
+        }
     }
 
     void end() throws IOException {
