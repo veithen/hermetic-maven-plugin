@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.veithen</groupId>
         <artifactId>parent</artifactId>
-        <version>16</version>
+        <version>17-SNAPSHOT</version>
     </parent>
 
     <groupId>com.github.veithen.maven</groupId>
@@ -94,13 +94,6 @@
             <plugin>
                 <groupId>com.github.veithen.maven</groupId>
                 <artifactId>hermetic-maven-plugin</artifactId>
-                <executions>
-                    <!-- TODO: remove this when a release with a fix is available -->
-                    <execution>
-                        <id>default</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
                 <configuration>
                     <allowExec>true</allowExec>
                 </configuration>
