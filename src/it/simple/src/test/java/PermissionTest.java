@@ -22,6 +22,9 @@ import static com.google.common.truth.Truth.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import javax.xml.bind.JAXBContext;
 
@@ -39,20 +42,29 @@ public class PermissionTest {
         assertThat(tempFile.delete()).isTrue();
     }
 
-    private static void checkReadPermissions(File dir) {
-        File[] files = dir.listFiles();
-        assertThat(files).isNotNull();
-        for (File file : files) {
-            if (file.isDirectory()) {
-                checkReadPermissions(file);
-            } else {
-                try {
-                    new RandomAccessFile(file, "r").close();
-                } catch (IOException ex) {
-                    // Ignore IOExceptions (e.g. caused by broken links). We are only
-                    // interested in security exceptions.
+    private static void checkReadPermissions(Path dir) {
+        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
+            for (Path path : directoryStream) {
+                while (true) {
+                    if (Files.isDirectory(path)) {
+                        checkReadPermissions(path);
+                    } else {
+                        try {
+                            new RandomAccessFile(path.toFile(), "r").close();
+                        } catch (IOException ex) {
+                            // Ignore IOExceptions (e.g. caused by broken links). We are only
+                            // interested in security exceptions.
+                        }
+                    }
+                    if (Files.isSymbolicLink(path)) {
+                        path = dir.resolve(Files.readSymbolicLink(path)).normalize();
+                    } else {
+                        break;
+                    }
                 }
             }
+        } catch (IOException ex) {
+            // Ignore (See above).
         }
     }
 
@@ -62,6 +74,6 @@ public class PermissionTest {
         if (javaHome.getName().equals("jre")) {
             javaHome = javaHome.getParentFile();
         }
-        checkReadPermissions(javaHome);
+        checkReadPermissions(javaHome.toPath());
     }
 }
