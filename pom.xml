@@ -136,4 +136,28 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- TODO: remove this when a release with a fix is available -->
+        <profile>
+            <id>disable-hermetic</id>
+            <activation>
+                <jdk>1.8</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.veithen.maven</groupId>
+                        <artifactId>hermetic-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default</id>
+                                <phase>none</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
