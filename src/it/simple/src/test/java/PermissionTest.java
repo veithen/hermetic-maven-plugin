@@ -20,6 +20,8 @@
 import static com.google.common.truth.Truth.assertThat;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 
 import javax.xml.bind.JAXBContext;
 
@@ -35,5 +37,27 @@ public class PermissionTest {
     public void testCreateTempFile() throws Exception {
         File tempFile = File.createTempFile("test", null);
         assertThat(tempFile.delete()).isTrue();
+    }
+
+    private static void checkReadPermissions(File dir) {
+        File[] files = dir.listFiles();
+        assertThat(files).isNotNull();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                checkReadPermissions(file);
+            } else {
+                try {
+                    new RandomAccessFile(file, "r").close();
+                } catch (IOException ex) {
+                    // Ignore IOExceptions (e.g. caused by broken links). We are only
+                    // interested in security exceptions.
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testReadJdkFiles() throws Exception {
+        checkReadPermissions(new File(System.getProperty("java.home")).getParentFile());
     }
 }
