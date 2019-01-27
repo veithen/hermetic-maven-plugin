@@ -71,7 +71,11 @@ final class PolicyWriter {
                                 generateDirReadPermissions(target, true, true);
                             }
                         } else {
-                            writePermission(new FilePermission(target.toString(), "read"));
+                            // We need to grant the readlink permission on the target of the link. This is
+                            // counter-intuitive, but depending on the Java version and the value of the
+                            // jdk.io.permissionsUseCanonicalPath system property, the permission may be
+                            // checked against the canonical path, i.e. the link target.
+                            writePermission(new FilePermission(target.toString(), "read,readlink"));
                         }
                     }
                 } else if (recursive && Files.isDirectory(path)) {
@@ -82,10 +86,13 @@ final class PolicyWriter {
     }
 
     private void generateDirReadPermissions(Path dir, boolean recursive, boolean symlinks) throws IOException {
-        writePermission(new FilePermission(dir.toString(), "read"));
+        String actions = symlinks ? "read,readlink" : "read";
+        writePermission(new FilePermission(dir.toString(), actions));
         if (Files.exists(dir)) {
-            writePermission(new FilePermission(dir.resolve(recursive ? "-" : "*").toString(), symlinks ? "read,readlink" : "read"));
-            generateSymlinkPermissions(dir, dir, recursive);
+            writePermission(new FilePermission(dir.resolve(recursive ? "-" : "*").toString(), actions));
+            if (symlinks) {
+                generateSymlinkPermissions(dir, dir, recursive);
+            }
         }
     }
     
