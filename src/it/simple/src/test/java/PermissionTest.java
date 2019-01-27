@@ -58,6 +58,10 @@ public class PermissionTest {
 
     @Test
     public void testReadJdkFiles() throws Exception {
-        checkReadPermissions(new File(System.getProperty("java.home")).getParentFile());
+        File javaHome = new File(System.getProperty("java.home"));
+        if (javaHome.getName().equals("jre")) {
+            javaHome = javaHome.getParentFile();
+        }
+        checkReadPermissions(javaHome);
     }
 }
