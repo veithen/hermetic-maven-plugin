@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.SerializablePermission;
 import java.io.Writer;
 import java.lang.management.ManagementPermission;
 import java.lang.reflect.ReflectPermission;
@@ -140,6 +141,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             writer.writePermission(new MBeanPermission("*", "*"));
             writer.writePermission(new MBeanServerPermission("*"));
             writer.writePermission(new MBeanTrustPermission("*"));
+            writer.writePermission(new SerializablePermission("*"));
             writer.writePermission("javax.xml.bind.JAXBPermission", "*", null);
             writer.writePermission("javax.xml.ws.WebServicePermission", "publishEndpoint", null);
             writer.writePermission("org.osgi.framework.AdminPermission", "*", "*");
