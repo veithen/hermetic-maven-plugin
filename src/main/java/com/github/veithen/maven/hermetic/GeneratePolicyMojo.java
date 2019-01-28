@@ -128,8 +128,18 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 }
             }
             for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
-                writer.writePermission(new FilePermission(dir, "read,write"));
-                writer.writePermission(new FilePermission(new File(dir, "-").getAbsolutePath(), "read,write,delete"));
+                File f = new File(dir).getAbsoluteFile();
+                while (true) {
+                    writer.writePermission(new FilePermission(f.toString(), "read,write"));
+                    writer.writePermission(new FilePermission(new File(f, "-").toString(), "read,write,delete"));
+                    // On Mac OS X, the temporary directory is symlinked.
+                    File canonicalFile = f.getCanonicalFile();
+                    if (canonicalFile.equals(f)) {
+                        break;
+                    } else {
+                        f = canonicalFile;
+                    }
+                }
             }
             writer.writePermission(new RuntimePermission("*"));
             writer.writePermission(new ManagementPermission("monitor"));
