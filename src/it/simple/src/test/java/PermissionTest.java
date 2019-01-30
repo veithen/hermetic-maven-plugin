@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -75,5 +76,15 @@ public class PermissionTest {
             javaHome = javaHome.getParentFile();
         }
         checkReadPermissions(javaHome.toPath());
+    }
+
+    @Test(expected=SecurityException.class)
+    public void testNetworkAccess() throws Exception {
+        new URL("http://www.google.com").openStream();
+    }
+
+    @Test(expected=SecurityException.class)
+    public void testFileSystemAccess() throws Exception {
+        new File(System.getProperty("user.home")).listFiles();
     }
 }
