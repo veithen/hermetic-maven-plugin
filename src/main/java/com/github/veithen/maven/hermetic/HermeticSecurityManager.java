@@ -28,7 +28,9 @@ public class HermeticSecurityManager extends SecurityManager {
     private static boolean needCheck(Permission permission) {
         return permission instanceof FilePermission
                 || permission instanceof SocketPermission
-                || permission instanceof URLPermission;
+                || permission instanceof URLPermission
+                || (permission instanceof RuntimePermission
+                        && permission.getName().equals("setSecurityManager"));
     }
 
     @Override
