@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -29,6 +30,9 @@ import java.nio.file.Path;
 
 import javax.xml.bind.JAXBContext;
 
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.junit.Test;
 
 public class PermissionTest {
@@ -79,8 +83,24 @@ public class PermissionTest {
     }
 
     @Test(expected=SecurityException.class)
-    public void testNetworkAccess() throws Exception {
+    public void testExternalURLAccess() throws Exception {
         new URL("http://www.google.com").openStream();
+    }
+
+    @Test
+    public void testLocalURLAccess() throws Exception {
+        Server server = new Server();
+        ServerConnector connector = new ServerConnector(server);
+        server.setConnectors(new Connector[] { connector });
+        server.start();
+        try {
+            HttpURLConnection conn = (HttpURLConnection)new URL("http", "localhost", connector.getLocalPort(), "/").openConnection();
+            conn.connect();
+            assertThat(conn.getResponseCode()).isEqualTo(404);
+            conn.disconnect();
+        } finally {
+            server.stop();
+        }
     }
 
     @Test(expected=SecurityException.class)
