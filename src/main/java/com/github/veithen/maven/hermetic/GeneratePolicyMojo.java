@@ -183,6 +183,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         if (debug) {
             buffer.append(" -Djava.security.debug=access,failure");
         }
-        props.setProperty(property, buffer.toString());
+        String value = buffer.toString();
+        props.setProperty(property, value);
+        getLog().info(String.format("%s set to %s", property, value));
     }
 }
