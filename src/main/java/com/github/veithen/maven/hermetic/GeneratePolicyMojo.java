@@ -24,41 +24,42 @@ import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.SerializablePermission;
 import java.io.Writer;
-import java.lang.management.ManagementPermission;
-import java.lang.reflect.ReflectPermission;
-import java.net.NetPermission;
 import java.net.SocketPermission;
-import java.security.SecurityPermission;
 import java.util.List;
 import java.util.Properties;
-import java.util.PropertyPermission;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.management.MBeanPermission;
-import javax.management.MBeanServerPermission;
-import javax.management.MBeanTrustPermission;
-
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 
 @Mojo(name="generate-policy", defaultPhase=LifecyclePhase.GENERATE_TEST_RESOURCES, threadSafe=true)
 public final class GeneratePolicyMojo extends AbstractMojo {
+    @Component
+    private ArtifactResolver artifactResolver;
+
     @Parameter(property="project", readonly=true, required=true)
     private MavenProject project;
 
     @Parameter(property="session", readonly=true, required=true)
     private MavenSession session;
+
+    @Parameter(property="mojoExecution", readonly=true, required=true)
+    protected MojoExecution mojoExecution;
 
     @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
     private File outputFile;
@@ -98,6 +99,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         if (skip || project.getPackaging().equals("pom")) {
             return;
         }
+        
         outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
@@ -141,22 +143,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                     }
                 }
             }
-            writer.writePermission(new RuntimePermission("*"));
-            writer.writePermission(new ManagementPermission("monitor"));
-            writer.writePermission(new ReflectPermission("*"));
-            writer.writePermission(new NetPermission("*"));
             writer.writePermission(new SocketPermission("localhost", "connect,listen,accept,resolve"));
-            writer.writePermission(new SecurityPermission("*"));
-            writer.writePermission(new PropertyPermission("*", "read,write"));
-            writer.writePermission(new MBeanPermission("*", "*"));
-            writer.writePermission(new MBeanServerPermission("*"));
-            writer.writePermission(new MBeanTrustPermission("*"));
-            writer.writePermission(new SerializablePermission("*"));
-            writer.writePermission("javax.xml.bind.JAXBPermission", "*", null);
-            writer.writePermission("javax.xml.ws.WebServicePermission", "publishEndpoint", null);
-            writer.writePermission("org.osgi.framework.AdaptPermission", "*", "adapt");
-            writer.writePermission("org.osgi.framework.AdminPermission", "*", "*");
-            writer.writePermission("org.osgi.framework.ServicePermission", "*", "register,get");
             if (allowExec) {
                 writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
             }
@@ -164,6 +151,19 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         } catch (IOException ex) {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
+        
+        File pluginJar;
+        DefaultArtifactCoordinate pluginArtifact = new DefaultArtifactCoordinate();
+        pluginArtifact.setGroupId(mojoExecution.getGroupId());
+        pluginArtifact.setArtifactId(mojoExecution.getArtifactId());
+        pluginArtifact.setVersion(mojoExecution.getVersion());
+        pluginArtifact.setExtension("jar");
+        try {
+            pluginJar = artifactResolver.resolveArtifact(session.getProjectBuildingRequest(), pluginArtifact).getArtifact().getFile();
+        } catch (ArtifactResolverException ex) {
+            throw new MojoFailureException("Failed to resolve plugin artifact", ex);
+        }
+        
         Properties props = project.getProperties();
         StringBuilder buffer = new StringBuilder();
         if (append) {
@@ -174,7 +174,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             }
         }
         // "==" sets the policy instead of adding additional permissions.
-        buffer.append("-Djava.security.manager -Djava.security.policy==");
+        buffer.append("-Xbootclasspath/a:");
+        buffer.append(pluginJar.toString());
+        buffer.append(" -Djava.security.manager=");
+        buffer.append(HermeticSecurityManager.class.getName());
+        buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
         if (debug) {
             buffer.append(" -Djava.security.debug=access,failure");
