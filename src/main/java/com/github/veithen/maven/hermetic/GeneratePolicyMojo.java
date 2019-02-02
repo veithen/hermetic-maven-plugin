@@ -173,11 +173,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 buffer.append(" ");
             }
         }
-        // "==" sets the policy instead of adding additional permissions.
         buffer.append("-Xbootclasspath/a:");
         buffer.append(pluginJar.toString());
         buffer.append(" -Djava.security.manager=");
         buffer.append(HermeticSecurityManager.class.getName());
+        // "==" sets the policy instead of adding additional permissions.
         buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
         if (debug) {
