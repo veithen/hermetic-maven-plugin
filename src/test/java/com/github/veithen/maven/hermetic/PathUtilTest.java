@@ -75,4 +75,16 @@ public class PathUtilTest {
         Path dir = fs.getPath("/Users/dummy/Library/Java/Extensions");
         assertThat(PathUtil.enumeratePaths(dir, 0)).containsExactly(PathSpec.create(dir, 0, true));
     }
+
+    @Test
+    public void testSymlinkToDirectory() throws Exception {
+        Path dir = fs.getPath("/dir1");
+        Files.createDirectory(dir);
+        Path target = fs.getPath("/dir2");
+        Files.createDirectory(target);
+        Files.createSymbolicLink(dir.resolve("link"), target);
+        assertThat(PathUtil.enumeratePaths(dir, Integer.MAX_VALUE)).containsExactly(
+                PathSpec.create(dir, 0, true),
+                PathSpec.create(target, 1, true));
+    }
 }

@@ -43,7 +43,7 @@ final class PathUtil {
                     if (!target.startsWith(rootDir)) {
                         if (Files.isDirectory(path)) {
                             if (depth < maxDepth) {
-                                enumeratePaths(dir, dir, depth+1, maxDepth, result);
+                                enumeratePaths(target, target, depth+1, maxDepth, result);
                             }
                         } else {
                             result.add(PathSpec.create(target, depth+1, false));
