@@ -24,12 +24,15 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 final class PathUtil {
     private PathUtil() {}
 
-    private static void enumeratePaths(Path rootDir, Path dir, int depth, int maxDepth, List<PathSpec> result) throws IOException {
+    private static void enumeratePaths(Path rootDir, Path dir, int depth, int maxDepth, Collection<PathSpec> result) throws IOException {
         if (dir == rootDir) {
             result.add(PathSpec.create(dir, depth, true));
         }
@@ -54,9 +57,16 @@ final class PathUtil {
         }
     }
 
-    static List<PathSpec> enumeratePaths(Path dir, int maxDepth) throws IOException {
-        List<PathSpec> result = new ArrayList<>();
+    static Collection<PathSpec> enumeratePaths(Path dir, int maxDepth) throws IOException {
+        Set<PathSpec> result = new HashSet<>();
         enumeratePaths(dir, dir, 0, maxDepth, result);
+        List<PathSpec> canonicalized = new ArrayList<>(result.size());
+        for (PathSpec pathSpec : result) {
+            if (Files.exists(pathSpec.path())) {
+                canonicalized.add(PathSpec.create(pathSpec.path().toRealPath(), pathSpec.depth(), pathSpec.directory()));
+            }
+        }
+        result.addAll(canonicalized);
         return result;
     }
 }

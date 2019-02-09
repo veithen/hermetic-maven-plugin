@@ -95,4 +95,17 @@ public class PathUtilTest {
         Files.createSymbolicLink(dir.resolve("link"), fs.getPath("/some/target"));
         assertThat(PathUtil.enumeratePaths(dir, 0)).containsExactly(PathSpec.create(dir, 0, true));
     }
+
+    @Test
+    public void testAncestorIsSymlink() throws Exception {
+        Path privateVar = fs.getPath("/private/var");
+        Path privateVarTmp = privateVar.resolve("tmp");
+        Files.createDirectories(privateVarTmp);
+        Path var = fs.getPath("/var");
+        Files.createSymbolicLink(var, privateVar);
+        Path tmp = var.resolve("tmp");
+        assertThat(PathUtil.enumeratePaths(tmp, 0)).containsExactly(
+                PathSpec.create(tmp, 0, true),
+                PathSpec.create(privateVarTmp, 0, true));
+    }
 }
