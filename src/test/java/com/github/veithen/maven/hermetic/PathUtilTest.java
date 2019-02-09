@@ -87,4 +87,12 @@ public class PathUtilTest {
                 PathSpec.create(dir, 0, true),
                 PathSpec.create(target, 1, true));
     }
+
+    @Test
+    public void testDepth0() throws Exception {
+        Path dir = fs.getPath("/dir");
+        Files.createDirectories(dir);
+        Files.createSymbolicLink(dir.resolve("link"), fs.getPath("/some/target"));
+        assertThat(PathUtil.enumeratePaths(dir, 0)).containsExactly(PathSpec.create(dir, 0, true));
+    }
 }

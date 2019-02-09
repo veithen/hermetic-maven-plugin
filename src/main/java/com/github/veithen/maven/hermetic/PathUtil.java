@@ -33,7 +33,7 @@ final class PathUtil {
         if (dir == rootDir) {
             result.add(PathSpec.create(dir, depth, true));
         }
-        if (!Files.exists(dir)) {
+        if (!Files.exists(dir) || depth == maxDepth) {
             return;
         }
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
@@ -42,14 +42,12 @@ final class PathUtil {
                     Path target = dir.resolve(Files.readSymbolicLink(path)).normalize();
                     if (!target.startsWith(rootDir)) {
                         if (Files.isDirectory(path)) {
-                            if (depth < maxDepth) {
-                                enumeratePaths(target, target, depth+1, maxDepth, result);
-                            }
+                            enumeratePaths(target, target, depth+1, maxDepth, result);
                         } else {
                             result.add(PathSpec.create(target, depth+1, false));
                         }
                     }
-                } else if (depth < maxDepth && Files.isDirectory(path)) {
+                } else if (Files.isDirectory(path)) {
                     enumeratePaths(rootDir, path, depth+1, maxDepth, result);
                 }
             }
