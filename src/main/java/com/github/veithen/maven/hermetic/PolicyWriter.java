@@ -23,9 +23,6 @@ import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
 import java.io.Writer;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.Permission;
 
 import org.apache.commons.text.StringEscapeUtils;
@@ -60,44 +57,15 @@ final class PolicyWriter {
         writePermission(permission.getClass().getName(), permission.getName(), actions.isEmpty() ? null : actions);
     }
 
-    private void generateSymlinkPermissions(Path rootDir, Path dir, boolean recursive) throws IOException {
-        try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
-            for (Path path : directoryStream) {
-                if (Files.isSymbolicLink(path)) {
-                    Path target = dir.resolve(Files.readSymbolicLink(path)).normalize();
-                    if (!target.startsWith(rootDir)) {
-                        if (Files.isDirectory(path)) {
-                            if (recursive) {
-                                generateDirReadPermissions(target, true, true);
-                            }
-                        } else {
-                            // We need to grant the readlink permission on the target of the link. This is
-                            // counter-intuitive, but depending on the Java version and the value of the
-                            // jdk.io.permissionsUseCanonicalPath system property, the permission may be
-                            // checked against the canonical path, i.e. the link target.
-                            writePermission(new FilePermission(target.toString(), "read,readlink"));
-                        }
-                    }
-                } else if (recursive && Files.isDirectory(path)) {
-                    generateSymlinkPermissions(rootDir, path, true);
-                }
+    void generateDirPermissions(File dir, int maxDepth, boolean allowWrite) throws IOException {
+        String rootActions = allowWrite ? "read,readlink,write" : "read,readlink";
+        String actions = allowWrite ? "read,readlink,write,delete" : "read,readlink";
+        for (PathSpec pathSpec : PathUtil.enumeratePaths(dir.getAbsoluteFile().toPath(), maxDepth)) {
+            writePermission(new FilePermission(pathSpec.path().toString(), pathSpec.depth() == 0 ? rootActions : actions));
+            if (pathSpec.directory()) {
+                writePermission(new FilePermission(pathSpec.path().resolve("-").toString(), actions));
             }
         }
-    }
-
-    private void generateDirReadPermissions(Path dir, boolean recursive, boolean symlinks) throws IOException {
-        String actions = symlinks ? "read,readlink" : "read";
-        writePermission(new FilePermission(dir.toString(), actions));
-        if (Files.exists(dir)) {
-            writePermission(new FilePermission(dir.resolve(recursive ? "-" : "*").toString(), actions));
-            if (symlinks) {
-                generateSymlinkPermissions(dir, dir, recursive);
-            }
-        }
-    }
-    
-    void generateDirReadPermissions(File dir, boolean recursive, boolean symlinks) throws IOException {
-        generateDirReadPermissions(dir.getAbsoluteFile().toPath(), recursive, symlinks);
     }
 
     void end() throws IOException {

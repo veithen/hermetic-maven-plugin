@@ -53,6 +53,7 @@
         <github.repository>hermetic-maven-plugin</github.repository>
         <javaVersion>1.8</javaVersion>
         <maven.version>3.0</maven.version>
+        <auto-value.version>1.6.3</auto-value.version>
     </properties>
 
     <repositories>
@@ -92,10 +93,43 @@
             <artifactId>commons-text</artifactId>
             <version>1.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.auto.value</groupId>
+            <artifactId>auto-value-annotations</artifactId>
+            <version>${auto-value.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.truth</groupId>
+            <artifactId>truth</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.jimfs</groupId>
+            <artifactId>jimfs</artifactId>
+            <version>1.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>com.google.auto.value</groupId>
+                            <artifactId>auto-value</artifactId>
+                            <version>${auto-value.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>com.github.veithen.maven</groupId>
                 <artifactId>hermetic-maven-plugin</artifactId>

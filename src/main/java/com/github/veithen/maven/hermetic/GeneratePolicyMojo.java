@@ -105,7 +105,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             PolicyWriter writer = new PolicyWriter(out);
             writer.start();
             File javaHome = getJavaHome();
-            writer.generateDirReadPermissions(javaHome, true, true);
+            writer.generateDirPermissions(javaHome, Integer.MAX_VALUE, false);
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
                 List<File> dirs = Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
@@ -113,12 +113,12 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                         .filter(dir -> !isDescendant(javaHome, dir))
                         .collect(Collectors.toList());
                 for (File dir : dirs) {
-                    writer.generateDirReadPermissions(dir, false, true);
+                    writer.generateDirPermissions(dir, 1, false);
                 }
             }
-            writer.generateDirReadPermissions(new File(System.getProperty("maven.home")), true, false);
-            writer.generateDirReadPermissions(new File(session.getSettings().getLocalRepository()), true, false);
-            writer.generateDirReadPermissions(project.getBasedir(), true, false);
+            writer.generateDirPermissions(new File(System.getProperty("maven.home")), 0, false);
+            writer.generateDirPermissions(new File(session.getSettings().getLocalRepository()), 0, false);
+            writer.generateDirPermissions(project.getBasedir(), 0, false);
             writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();
@@ -130,18 +130,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 }
             }
             for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
-                File f = new File(dir).getAbsoluteFile();
-                while (true) {
-                    writer.writePermission(new FilePermission(f.toString(), "read,write"));
-                    writer.writePermission(new FilePermission(new File(f, "-").toString(), "read,write,delete"));
-                    // On Mac OS X, the temporary directory is symlinked.
-                    File canonicalFile = f.getCanonicalFile();
-                    if (canonicalFile.equals(f)) {
-                        break;
-                    } else {
-                        f = canonicalFile;
-                    }
-                }
+                writer.generateDirPermissions(new File(dir), 0, true);
             }
             writer.writePermission(new SocketPermission("localhost", "connect,listen,accept,resolve"));
             if (allowExec) {
