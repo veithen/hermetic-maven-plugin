@@ -23,11 +23,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.SocketPermission;
 import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,20 +41,17 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
-import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.commons.ClassRemapper;
+import org.objectweb.asm.commons.Remapper;
 
 @Mojo(name="generate-policy", defaultPhase=LifecyclePhase.GENERATE_TEST_RESOURCES, threadSafe=true)
 public final class GeneratePolicyMojo extends AbstractMojo {
-    @Component
-    private ArtifactResolver artifactResolver;
-
     @Parameter(property="project", readonly=true, required=true)
     private MavenProject project;
 
@@ -63,6 +63,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
     @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
     private File outputFile;
+
+    @Parameter(defaultValue="${project.build.directory}/secmgr.jar", readonly=true, required=true)
+    private File securityManagerJarFile;
 
     @Parameter(defaultValue="false", required=true)
     private boolean skip;
@@ -141,16 +144,25 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
         
-        File pluginJar;
-        DefaultArtifactCoordinate pluginArtifact = new DefaultArtifactCoordinate();
-        pluginArtifact.setGroupId(mojoExecution.getGroupId());
-        pluginArtifact.setArtifactId(mojoExecution.getArtifactId());
-        pluginArtifact.setVersion(mojoExecution.getVersion());
-        pluginArtifact.setExtension("jar");
-        try {
-            pluginJar = artifactResolver.resolveArtifact(session.getProjectBuildingRequest(), pluginArtifact).getArtifact().getFile();
-        } catch (ArtifactResolverException ex) {
-            throw new MojoFailureException("Failed to resolve plugin artifact", ex);
+        try (InputStream in = GeneratePolicyMojo.class.getResourceAsStream("HermeticSecurityManager.class")) {
+            try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(securityManagerJarFile))) {
+                jar.putNextEntry(new JarEntry("secmgr/HermeticSecurityManager.class"));
+                Remapper remapper = new Remapper() {
+                    @Override
+                    public String map(String typeName) {
+                        if (typeName.equals("com/github/veithen/maven/hermetic/HermeticSecurityManager")) {
+                            return "secmgr/HermeticSecurityManager";
+                        }
+                        return super.map(typeName);
+                    }
+                };
+                ClassReader reader = new ClassReader(in);
+                ClassWriter writer = new ClassWriter(reader, 0);
+                reader.accept(new ClassRemapper(writer, remapper), 0);
+                jar.write(writer.toByteArray());
+            }
+        } catch (IOException ex) {
+            throw new MojoFailureException("Failed to generate security manager JAR", ex);
         }
         
         Properties props = project.getProperties();
@@ -163,9 +175,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             }
         }
         buffer.append("-Xbootclasspath/a:");
-        buffer.append(pluginJar.toString());
-        buffer.append(" -Djava.security.manager=");
-        buffer.append(HermeticSecurityManager.class.getName());
+        buffer.append(securityManagerJarFile.toString());
+        buffer.append(" -Djava.security.manager=secmgr.HermeticSecurityManager");
         // "==" sets the policy instead of adding additional permissions.
         buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
