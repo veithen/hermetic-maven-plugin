@@ -107,13 +107,4 @@ public class PermissionTest {
     public void testFileSystemAccess() throws Exception {
         new File(System.getProperty("user.home")).listFiles();
     }
-
-    // We can't allow changing the security manager: the generated policy only has
-    // FilePermission and SocketPermission entries, and other permissions are granted
-    // by the custom SecurityManager. Using a different one would then inevitable
-    // result in security exceptions.
-    @Test(expected=SecurityException.class)
-    public void testSetSecurityManager() {
-        System.setSecurityManager(new SecurityManager());
-    }
 }

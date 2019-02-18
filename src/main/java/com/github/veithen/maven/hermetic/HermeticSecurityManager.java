@@ -25,12 +25,15 @@ import java.net.URLPermission;
 import java.security.Permission;
 
 public class HermeticSecurityManager extends SecurityManager {
+    private static final ThreadLocal<Boolean> inUninstall = new ThreadLocal<>();
+
     private static boolean needCheck(Permission permission) {
         return permission instanceof FilePermission
                 || permission instanceof SocketPermission
                 || permission instanceof URLPermission
                 || (permission instanceof RuntimePermission
-                        && permission.getName().equals("setSecurityManager"));
+                        && permission.getName().equals("setSecurityManager")
+                        && !Boolean.TRUE.equals(inUninstall.get()));
     }
 
     @Override
@@ -44,6 +47,19 @@ public class HermeticSecurityManager extends SecurityManager {
     public void checkPermission(Permission permission, Object context) {
         if (needCheck(permission)) {
             super.checkPermission(permission, context);
+        }
+    }
+
+    static void install() {
+        System.setSecurityManager(new HermeticSecurityManager());
+    }
+
+    static void uninstall() {
+        inUninstall.set(Boolean.TRUE);
+        try {
+            System.setSecurityManager(null);
+        } finally {
+            inUninstall.remove();
         }
     }
 }
