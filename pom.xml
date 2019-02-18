@@ -141,6 +141,13 @@
                 <configuration>
                     <allowExec>true</allowExec>
                 </configuration>
+                <!-- TODO: remove this when a new release is available -->
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>com.github.veithen.invoker</groupId>
@@ -177,17 +184,6 @@
                     <projectName>hermetic-maven-plugin</projectName>
                     <licenseName>apache_v2</licenseName>
                 </configuration>
-            </plugin>
-            <plugin>
-                <!-- TODO: remove this when a new release is available -->
-                <groupId>com.github.veithen.maven</groupId>
-                <artifactId>hermetic-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
