@@ -41,9 +41,9 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>com.github.veithen.invoker</groupId>
+                <groupId>com.github.veithen.maven</groupId>
                 <artifactId>resolver-proxy-maven-plugin</artifactId>
-                <version>0.1.1</version>
+                <version>0.2.0</version>
                 <executions>
                     <execution>
                         <goals>
