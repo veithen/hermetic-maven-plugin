@@ -8,3 +8,15 @@ updates:
     directory: "/src/it/simple"
     schedule:
       interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/src/it/equinox"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/src/it/invoker"
+    schedule:
+      interval: "daily"
+  - package-ecosystem: "maven"
+    directory: "/src/it/invoker/src/it/dummy"
+    schedule:
+      interval: "daily"
