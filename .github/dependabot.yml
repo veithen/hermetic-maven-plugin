@@ -8,6 +8,9 @@ updates:
     directory: "/src/it/simple"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "org.eclipse.jetty:jetty-server"
+        versions: ">= 10.0"
   - package-ecosystem: "maven"
     directory: "/src/it/equinox"
     schedule:
