@@ -105,6 +105,11 @@ public class PermissionTest {
 
     @Test(expected=SecurityException.class)
     public void testFileSystemAccess() throws Exception {
-        new File(System.getProperty("user.home")).listFiles();
+        new File(System.getProperty("user.home"), "somefile").listFiles();
+    }
+
+    @Test
+    public void testUserHomeDirectoryCheck() throws Exception {
+        new File(System.getProperty("user.home")).isDirectory();
     }
 }

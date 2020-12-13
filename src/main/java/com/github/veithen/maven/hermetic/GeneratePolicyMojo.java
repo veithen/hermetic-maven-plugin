@@ -135,6 +135,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
                 writer.generateDirPermissions(new File(dir), 0, true);
             }
+            // Some code (like maven-bundle-plugin) uses File#isDirectory() on the home directory. Allow this, but
+            // don't allow access to other files.
+            writer.writePermission(new FilePermission(System.getProperty("user.home"), "read"));
             writer.writePermission(new SocketPermission("localhost", "connect,listen,accept,resolve"));
             if (allowExec) {
                 writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
