@@ -23,14 +23,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.SocketPermission;
 import java.util.List;
 import java.util.Properties;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,14 +38,15 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.DefaultProjectBuildingRequest;
 import org.apache.maven.project.MavenProject;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.Remapper;
+import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
+import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 
 @Mojo(name="generate-policy", defaultPhase=LifecyclePhase.GENERATE_TEST_RESOURCES, threadSafe=true)
 public final class GeneratePolicyMojo extends AbstractMojo {
@@ -60,6 +58,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
     @Parameter(property="mojoExecution", readonly=true, required=true)
     protected MojoExecution mojoExecution;
+
+    @Component
+    private ArtifactResolver resolver;
 
     @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
     private File outputFile;
@@ -147,25 +148,18 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
         
-        try (InputStream in = GeneratePolicyMojo.class.getResourceAsStream("HermeticSecurityManager.class")) {
-            try (JarOutputStream jar = new JarOutputStream(new FileOutputStream(securityManagerJarFile))) {
-                jar.putNextEntry(new JarEntry("secmgr/HermeticSecurityManager.class"));
-                Remapper remapper = new Remapper() {
-                    @Override
-                    public String map(String typeName) {
-                        if (typeName.equals("com/github/veithen/maven/hermetic/HermeticSecurityManager")) {
-                            return "secmgr/HermeticSecurityManager";
-                        }
-                        return super.map(typeName);
-                    }
-                };
-                ClassReader reader = new ClassReader(in);
-                ClassWriter writer = new ClassWriter(reader, 0);
-                reader.accept(new ClassRemapper(writer, remapper), 0);
-                jar.write(writer.toByteArray());
-            }
-        } catch (IOException ex) {
-            throw new MojoFailureException("Failed to generate security manager JAR", ex);
+        DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
+        securityManagerArtifact.setGroupId("com.github.veithen");
+        securityManagerArtifact.setArtifactId("hermetic-security-manager");
+        securityManagerArtifact.setVersion("1.0.0");
+        securityManagerArtifact.setExtension("jar");
+        File securityManagerJarFile;
+        try {
+            DefaultProjectBuildingRequest projectBuildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
+            projectBuildingRequest.setRemoteRepositories(project.getPluginArtifactRepositories());
+            securityManagerJarFile = resolver.resolveArtifact(projectBuildingRequest, securityManagerArtifact).getArtifact().getFile();
+        } catch (ArtifactResolverException ex) {
+            throw new MojoFailureException("Unable to resolve artifact", ex);
         }
         
         Properties props = project.getProperties();
@@ -179,7 +173,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         }
         buffer.append("-Xbootclasspath/a:");
         buffer.append(securityManagerJarFile.toString());
-        buffer.append(" -Djava.security.manager=secmgr.HermeticSecurityManager");
+        buffer.append(" -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
         // "==" sets the policy instead of adding additional permissions.
         buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
