@@ -77,6 +77,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue="false", required=true)
     private boolean allowExec;
 
+    @Parameter(defaultValue="false", required=true)
+    private boolean allowCrossProjectAccess;
+
     @Parameter(defaultValue="argLine", required=true)
     private String property;
 
@@ -104,6 +107,16 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             return;
         }
         
+        File projectDir = project.getBasedir();
+        if (allowCrossProjectAccess) {
+            File dir = projectDir;
+            while ((dir = dir.getParentFile()) != null) {
+                if (new File(dir, "pom.xml").exists()) {
+                    projectDir = dir;
+                }
+            }
+        }
+        
         outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
@@ -122,7 +135,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             }
             writer.generateDirPermissions(new File(System.getProperty("maven.home")), 0, false);
             writer.generateDirPermissions(new File(session.getSettings().getLocalRepository()), 0, false);
-            writer.generateDirPermissions(project.getBasedir(), 0, false);
+            writer.generateDirPermissions(projectDir, 0, false);
             writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();
