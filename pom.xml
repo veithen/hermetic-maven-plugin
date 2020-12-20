@@ -29,7 +29,7 @@
 
     <groupId>com.github.veithen.maven</groupId>
     <artifactId>hermetic-maven-plugin</artifactId>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>0.5.0</version>
     <packaging>maven-plugin</packaging>
 
     <url>https://github.com/veithen/hermetic-maven-plugin</url>
@@ -46,7 +46,7 @@
         <url>https://github.com/veithen/hermetic-maven-plugin/tree/master</url>
         <connection>scm:git:http://github.com/veithen/hermetic-maven-plugin.git</connection>
         <developerConnection>scm:git:https://github.com/veithen/hermetic-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>0.5.0</tag>
     </scm>
 
     <properties>
