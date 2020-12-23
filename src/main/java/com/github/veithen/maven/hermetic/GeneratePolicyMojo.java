@@ -67,12 +67,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.directory}/test.policy", required = true)
     private File outputFile;
 
-    @Parameter(
-            defaultValue = "${project.build.directory}/secmgr.jar",
-            readonly = true,
-            required = true)
-    private File securityManagerJarFile;
-
     @Parameter(defaultValue = "false", required = true)
     private boolean skip;
 
