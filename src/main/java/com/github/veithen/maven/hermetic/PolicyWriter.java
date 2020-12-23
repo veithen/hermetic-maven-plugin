@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,8 @@ final class PolicyWriter {
         out.write("grant {\n");
     }
 
-    void writePermission(String permissionClassName, String targetName, String action) throws IOException {
+    void writePermission(String permissionClassName, String targetName, String action)
+            throws IOException {
         out.write("  permission ");
         out.write(permissionClassName);
         out.write(" \"");
@@ -54,16 +55,24 @@ final class PolicyWriter {
 
     void writePermission(Permission permission) throws IOException {
         String actions = permission.getActions();
-        writePermission(permission.getClass().getName(), permission.getName(), actions.isEmpty() ? null : actions);
+        writePermission(
+                permission.getClass().getName(),
+                permission.getName(),
+                actions.isEmpty() ? null : actions);
     }
 
     void generateDirPermissions(File dir, int maxDepth, boolean allowWrite) throws IOException {
         String rootActions = allowWrite ? "read,readlink,write" : "read,readlink";
         String actions = allowWrite ? "read,readlink,write,delete" : "read,readlink";
-        for (PathSpec pathSpec : PathUtil.enumeratePaths(dir.getAbsoluteFile().toPath(), maxDepth)) {
-            writePermission(new FilePermission(pathSpec.path().toString(), pathSpec.depth() == 0 ? rootActions : actions));
+        for (PathSpec pathSpec :
+                PathUtil.enumeratePaths(dir.getAbsoluteFile().toPath(), maxDepth)) {
+            writePermission(
+                    new FilePermission(
+                            pathSpec.path().toString(),
+                            pathSpec.depth() == 0 ? rootActions : actions));
             if (pathSpec.directory()) {
-                writePermission(new FilePermission(pathSpec.path().resolve("-").toString(), actions));
+                writePermission(
+                        new FilePermission(pathSpec.path().resolve("-").toString(), actions));
             }
         }
     }

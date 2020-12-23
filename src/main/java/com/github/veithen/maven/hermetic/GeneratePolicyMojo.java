@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,42 +48,47 @@ import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
 
-@Mojo(name="generate-policy", defaultPhase=LifecyclePhase.GENERATE_TEST_RESOURCES, threadSafe=true)
+@Mojo(
+        name = "generate-policy",
+        defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES,
+        threadSafe = true)
 public final class GeneratePolicyMojo extends AbstractMojo {
-    @Parameter(property="project", readonly=true, required=true)
+    @Parameter(property = "project", readonly = true, required = true)
     private MavenProject project;
 
-    @Parameter(property="session", readonly=true, required=true)
+    @Parameter(property = "session", readonly = true, required = true)
     private MavenSession session;
 
-    @Parameter(property="mojoExecution", readonly=true, required=true)
+    @Parameter(property = "mojoExecution", readonly = true, required = true)
     protected MojoExecution mojoExecution;
 
-    @Component
-    private ArtifactResolver resolver;
+    @Component private ArtifactResolver resolver;
 
-    @Parameter(defaultValue="${project.build.directory}/test.policy", required=true)
+    @Parameter(defaultValue = "${project.build.directory}/test.policy", required = true)
     private File outputFile;
 
-    @Parameter(defaultValue="${project.build.directory}/secmgr.jar", readonly=true, required=true)
+    @Parameter(
+            defaultValue = "${project.build.directory}/secmgr.jar",
+            readonly = true,
+            required = true)
     private File securityManagerJarFile;
 
-    @Parameter(defaultValue="false", required=true)
+    @Parameter(defaultValue = "false", required = true)
     private boolean skip;
 
-    @Parameter(defaultValue="false", required=true)
+    @Parameter(defaultValue = "false", required = true)
     private boolean debug;
 
-    @Parameter(defaultValue="false", required=true)
+    @Parameter(defaultValue = "false", required = true)
     private boolean allowExec;
 
-    @Parameter(defaultValue="false", required=true)
+    @Parameter(defaultValue = "false", required = true)
     private boolean allowCrossProjectAccess;
 
-    @Parameter(defaultValue="argLine", required=true)
+    @Parameter(defaultValue = "argLine", required = true)
     private String property;
 
-    @Parameter(defaultValue="true", required=true)
+    @Parameter(defaultValue = "true", required = true)
     private boolean append;
 
     private static File getJavaHome() {
@@ -106,7 +111,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         if (skip || project.getPackaging().equals("pom")) {
             return;
         }
-        
+
         File projectDir = project.getBasedir();
         if (allowCrossProjectAccess) {
             File dir = projectDir;
@@ -116,7 +121,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 }
             }
         }
-        
+
         outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out);
@@ -125,34 +130,45 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             writer.generateDirPermissions(javaHome, Integer.MAX_VALUE, false);
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
-                List<File> dirs = Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
-                        .map(File::new)
-                        .filter(dir -> !isDescendant(javaHome, dir))
-                        .collect(Collectors.toList());
+                List<File> dirs =
+                        Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
+                                .map(File::new)
+                                .filter(dir -> !isDescendant(javaHome, dir))
+                                .collect(Collectors.toList());
                 for (File dir : dirs) {
                     writer.generateDirPermissions(dir, 1, false);
                 }
             }
             writer.generateDirPermissions(new File(System.getProperty("maven.home")), 0, false);
-            writer.generateDirPermissions(new File(session.getSettings().getLocalRepository()), 0, false);
+            writer.generateDirPermissions(
+                    new File(session.getSettings().getLocalRepository()), 0, false);
             writer.generateDirPermissions(projectDir, 0, false);
-            writer.writePermission(new FilePermission(session.getRequest().getUserToolchainsFile().getAbsolutePath(), "read"));
+            writer.writePermission(
+                    new FilePermission(
+                            session.getRequest().getUserToolchainsFile().getAbsolutePath(),
+                            "read"));
             for (MavenProject project : session.getProjects()) {
                 File file = project.getArtifact().getFile();
                 if (file != null) {
                     writer.writePermission(new FilePermission(file.getAbsolutePath(), "read"));
                 }
                 for (Artifact attachedArtifact : project.getAttachedArtifacts()) {
-                    writer.writePermission(new FilePermission(attachedArtifact.getFile().getAbsolutePath(), "read"));
+                    writer.writePermission(
+                            new FilePermission(
+                                    attachedArtifact.getFile().getAbsolutePath(), "read"));
                 }
             }
-            for (String dir : new String[] { project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir") }) {
+            for (String dir :
+                    new String[] {
+                        project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir")
+                    }) {
                 writer.generateDirPermissions(new File(dir), 0, true);
             }
-            // Some code (like maven-bundle-plugin) uses File#isDirectory() on the home directory. Allow this, but
-            // don't allow access to other files.
+            // Some code (like maven-bundle-plugin) uses File#isDirectory() on the home directory.
+            // Allow this, but don't allow access to other files.
             writer.writePermission(new FilePermission(System.getProperty("user.home"), "read"));
-            writer.writePermission(new SocketPermission("localhost", "connect,listen,accept,resolve"));
+            writer.writePermission(
+                    new SocketPermission("localhost", "connect,listen,accept,resolve"));
             if (allowExec) {
                 writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
             }
@@ -160,7 +176,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         } catch (IOException ex) {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
-        
+
         DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
         securityManagerArtifact.setGroupId("com.github.veithen");
         securityManagerArtifact.setArtifactId("hermetic-security-manager");
@@ -168,13 +184,17 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         securityManagerArtifact.setExtension("jar");
         File securityManagerJarFile;
         try {
-            DefaultProjectBuildingRequest projectBuildingRequest = new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
+            DefaultProjectBuildingRequest projectBuildingRequest =
+                    new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
             projectBuildingRequest.setRemoteRepositories(project.getPluginArtifactRepositories());
-            securityManagerJarFile = resolver.resolveArtifact(projectBuildingRequest, securityManagerArtifact).getArtifact().getFile();
+            securityManagerJarFile =
+                    resolver.resolveArtifact(projectBuildingRequest, securityManagerArtifact)
+                            .getArtifact()
+                            .getFile();
         } catch (ArtifactResolverException ex) {
             throw new MojoFailureException("Unable to resolve artifact", ex);
         }
-        
+
         Properties props = project.getProperties();
         StringBuilder buffer = new StringBuilder();
         if (append) {
@@ -186,7 +206,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         }
         buffer.append("-Xbootclasspath/a:");
         buffer.append(securityManagerJarFile.toString());
-        buffer.append(" -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
+        buffer.append(
+                " -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
         // "==" sets the policy instead of adding additional permissions.
         buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));

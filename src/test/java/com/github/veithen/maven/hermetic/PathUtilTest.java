@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,9 +49,8 @@ public class PathUtilTest {
         Files.createFile(lib);
         Path symlink = extDir.resolve("libdummy.dylib");
         Files.createSymbolicLink(symlink, lib);
-        assertThat(PathUtil.enumeratePaths(extDir, 1)).containsExactly(
-                PathSpec.create(extDir, 0, true),
-                PathSpec.create(lib, 1, false));
+        assertThat(PathUtil.enumeratePaths(extDir, 1))
+                .containsExactly(PathSpec.create(extDir, 0, true), PathSpec.create(lib, 1, false));
     }
 
     @Test
@@ -65,9 +64,9 @@ public class PathUtilTest {
         Path cacerts = etcDir.resolve("cacerts");
         Files.createFile(cacerts);
         Files.createSymbolicLink(symlink, cacerts);
-        assertThat(PathUtil.enumeratePaths(javaHome, Integer.MAX_VALUE)).containsExactly(
-                PathSpec.create(javaHome, 0, true),
-                PathSpec.create(cacerts, 4, false));
+        assertThat(PathUtil.enumeratePaths(javaHome, Integer.MAX_VALUE))
+                .containsExactly(
+                        PathSpec.create(javaHome, 0, true), PathSpec.create(cacerts, 4, false));
     }
 
     @Test
@@ -83,9 +82,8 @@ public class PathUtilTest {
         Path target = fs.getPath("/dir2");
         Files.createDirectory(target);
         Files.createSymbolicLink(dir.resolve("link"), target);
-        assertThat(PathUtil.enumeratePaths(dir, Integer.MAX_VALUE)).containsExactly(
-                PathSpec.create(dir, 0, true),
-                PathSpec.create(target, 1, true));
+        assertThat(PathUtil.enumeratePaths(dir, Integer.MAX_VALUE))
+                .containsExactly(PathSpec.create(dir, 0, true), PathSpec.create(target, 1, true));
     }
 
     @Test
@@ -104,8 +102,8 @@ public class PathUtilTest {
         Path var = fs.getPath("/var");
         Files.createSymbolicLink(var, privateVar);
         Path tmp = var.resolve("tmp");
-        assertThat(PathUtil.enumeratePaths(tmp, 0)).containsExactly(
-                PathSpec.create(tmp, 0, true),
-                PathSpec.create(privateVarTmp, 0, true));
+        assertThat(PathUtil.enumeratePaths(tmp, 0))
+                .containsExactly(
+                        PathSpec.create(tmp, 0, true), PathSpec.create(privateVarTmp, 0, true));
     }
 }
