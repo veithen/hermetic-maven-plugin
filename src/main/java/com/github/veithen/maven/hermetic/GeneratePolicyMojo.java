@@ -25,7 +25,11 @@ import java.io.FilePermission;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.SocketPermission;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -163,6 +167,17 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             writer.writePermission(new FilePermission(System.getProperty("user.home"), "read"));
             writer.writePermission(
                     new SocketPermission("localhost", "connect,listen,accept,resolve"));
+            for (NetworkInterface iface :
+                    Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                for (InterfaceAddress ifaceAddr : iface.getInterfaceAddresses()) {
+                    InetAddress addr = ifaceAddr.getAddress();
+                    if (addr.isLoopbackAddress() || !addr.isLinkLocalAddress()) {
+                        writer.writePermission(
+                                new SocketPermission(
+                                        addr.getHostAddress(), "connect,listen,accept,resolve"));
+                    }
+                }
+            }
             if (allowExec) {
                 writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
             }

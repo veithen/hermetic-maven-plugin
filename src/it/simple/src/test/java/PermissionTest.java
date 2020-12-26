@@ -23,10 +23,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.Enumeration;
 
 import jakarta.xml.bind.JAXBContext;
 
@@ -98,6 +103,18 @@ public class PermissionTest {
             conn.connect();
             assertThat(conn.getResponseCode()).isEqualTo(404);
             conn.disconnect();
+
+            for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                for (InterfaceAddress ifaceAddr : iface.getInterfaceAddresses()) {
+                    InetAddress addr = ifaceAddr.getAddress();
+                    if (addr.isLoopbackAddress() || !addr.isLinkLocalAddress()) {
+                        conn = (HttpURLConnection)new URL("http", addr.getHostAddress(), connector.getLocalPort(), "/").openConnection();
+                        conn.connect();
+                        assertThat(conn.getResponseCode()).isEqualTo(404);
+                        conn.disconnect();
+                    }
+                }
+            }
         } finally {
             server.stop();
         }
