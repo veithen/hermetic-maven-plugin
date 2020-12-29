@@ -35,6 +35,7 @@ import java.util.Enumeration;
 
 import jakarta.xml.bind.JAXBContext;
 
+import org.apache.tools.ant.util.JavaEnvUtils;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -128,5 +129,10 @@ public class PermissionTest {
     @Test
     public void testUserHomeDirectoryCheck() throws Exception {
         new File(System.getProperty("user.home")).isDirectory();
+    }
+
+    @Test
+    public void test() {
+        assertThat(JavaEnvUtils.getJdkExecutable("javac")).isNotNull();
     }
 }

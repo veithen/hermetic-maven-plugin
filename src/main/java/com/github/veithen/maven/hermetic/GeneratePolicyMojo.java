@@ -91,7 +91,12 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
     private static File getJavaHome() {
         File javaHome = new File(System.getProperty("java.home"));
-        return javaHome.getName().equals("jre") ? javaHome.getParentFile() : javaHome;
+        String name = javaHome.getName();
+        // On Mac OS X there is no distinction between JRE and JDK and the directory is called
+        // "Home". In that case, some code in Ant tries to access sibling directories. Allow this.
+        return name.equals("jre") || name.contentEquals("Home")
+                ? javaHome.getParentFile()
+                : javaHome;
     }
 
     private static boolean isDescendant(File dir, File path) {
