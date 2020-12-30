@@ -42,6 +42,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -89,14 +90,24 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "true", required = true)
     private boolean append;
 
-    private static File getJavaHome() {
-        File javaHome = new File(System.getProperty("java.home"));
+    private File getJdkHome() {
+        Log log = getLog();
+        String javaHomeProperty = System.getProperty("java.home");
+        if (log.isDebugEnabled()) {
+            log.debug("java.home = " + javaHomeProperty);
+        }
+        File javaHome = new File(javaHomeProperty);
         String name = javaHome.getName();
         // On Mac OS X there is no distinction between JRE and JDK and the directory is called
         // "Home". In that case, some code in Ant tries to access sibling directories. Allow this.
-        return name.equals("jre") || name.contentEquals("Home")
-                ? javaHome.getParentFile()
-                : javaHome;
+        File jdkHome =
+                name.equals("jre") || name.contentEquals("Home")
+                        ? javaHome.getParentFile()
+                        : javaHome;
+        if (log.isDebugEnabled()) {
+            log.debug("JDK home is " + jdkHome);
+        }
+        return jdkHome;
     }
 
     private static boolean isDescendant(File dir, File path) {
@@ -111,6 +122,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        Log log = getLog();
+
         if (skip || project.getPackaging().equals("pom")) {
             return;
         }
@@ -127,16 +140,16 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
         outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
-            PolicyWriter writer = new PolicyWriter(out);
+            PolicyWriter writer = new PolicyWriter(out, log);
             writer.start();
-            File javaHome = getJavaHome();
-            writer.generateDirPermissions(javaHome, Integer.MAX_VALUE, false);
+            File jdkHome = getJdkHome();
+            writer.generateDirPermissions(jdkHome, Integer.MAX_VALUE, false);
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
                 List<File> dirs =
                         Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
                                 .map(File::new)
-                                .filter(dir -> !isDescendant(javaHome, dir))
+                                .filter(dir -> !isDescendant(jdkHome, dir))
                                 .collect(Collectors.toList());
                 for (File dir : dirs) {
                     writer.generateDirPermissions(dir, 1, false);
@@ -230,6 +243,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         }
         String value = buffer.toString();
         props.setProperty(property, value);
-        getLog().info(String.format("%s set to %s", property, value));
+        log.info(String.format("%s set to %s", property, value));
     }
 }

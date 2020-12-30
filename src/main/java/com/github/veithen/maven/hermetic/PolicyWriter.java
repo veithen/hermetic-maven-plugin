@@ -26,12 +26,15 @@ import java.io.Writer;
 import java.security.Permission;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.maven.plugin.logging.Log;
 
 final class PolicyWriter {
     private final Writer out;
+    private final Log log;
 
-    PolicyWriter(Writer out) {
+    PolicyWriter(Writer out, Log log) {
         this.out = out;
+        this.log = log;
     }
 
     void start() throws IOException {
@@ -40,16 +43,22 @@ final class PolicyWriter {
 
     void writePermission(String permissionClassName, String targetName, String action)
             throws IOException {
-        out.write("  permission ");
-        out.write(permissionClassName);
-        out.write(" \"");
-        out.write(StringEscapeUtils.escapeJava(targetName));
-        out.write('"');
+        StringBuilder buffer = new StringBuilder("permission ");
+        buffer.append(permissionClassName);
+        buffer.append(" \"");
+        buffer.append(StringEscapeUtils.escapeJava(targetName));
+        buffer.append('"');
         if (action != null) {
-            out.write(", \"");
-            out.write(StringEscapeUtils.escapeJava(action));
-            out.write('"');
+            buffer.append(", \"");
+            buffer.append(StringEscapeUtils.escapeJava(action));
+            buffer.append('"');
         }
+        String permission = buffer.toString();
+        if (log.isDebugEnabled()) {
+            log.debug("Adding " + permission);
+        }
+        out.write("  ");
+        out.write(permission);
         out.write(";\n");
     }
 
