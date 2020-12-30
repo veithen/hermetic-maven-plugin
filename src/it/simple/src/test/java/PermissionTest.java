@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -91,7 +92,12 @@ public class PermissionTest {
 
     @Test(expected=SecurityException.class)
     public void testExternalURLAccess() throws Exception {
-        new URL("http://www.google.com").openStream();
+        new URL("http://www.google.com").openStream().close();
+    }
+
+    @Test(expected=UnknownHostException.class)
+    public void testInvalidHostname() throws Exception {
+        new URL("http://rfc2606.invalid").openStream().close();
     }
 
     @Test

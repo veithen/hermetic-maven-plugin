@@ -225,7 +225,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
             securityManagerArtifact.setGroupId("com.github.veithen");
             securityManagerArtifact.setArtifactId("hermetic-security-manager");
-            securityManagerArtifact.setVersion("1.0.0");
+            securityManagerArtifact.setVersion("1.1.0");
             securityManagerArtifact.setExtension("jar");
             File securityManagerJarFile;
             try {
