@@ -91,6 +91,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "true", required = true)
     private boolean append;
 
+    @Parameter(defaultValue = "false", required = true)
+    private boolean generatePolicyOnly;
+
     private static boolean isDescendant(File dir, File path) {
         do {
             if (path.equals(dir)) {
@@ -210,37 +213,39 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
         }
 
-        DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
-        securityManagerArtifact.setGroupId("com.github.veithen");
-        securityManagerArtifact.setArtifactId("hermetic-security-manager");
-        securityManagerArtifact.setVersion("1.0.0");
-        securityManagerArtifact.setExtension("jar");
-        File securityManagerJarFile;
-        try {
-            DefaultProjectBuildingRequest projectBuildingRequest =
-                    new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
-            projectBuildingRequest.setRemoteRepositories(project.getPluginArtifactRepositories());
-            securityManagerJarFile =
-                    resolver.resolveArtifact(projectBuildingRequest, securityManagerArtifact)
-                            .getArtifact()
-                            .getFile();
-        } catch (ArtifactResolverException ex) {
-            throw new MojoFailureException("Unable to resolve artifact", ex);
-        }
-
         Properties props = project.getProperties();
         StringBuilder buffer = new StringBuilder();
         if (append) {
             String currentValue = props.getProperty(property);
             if (currentValue != null) {
                 buffer.append(currentValue);
-                buffer.append(" ");
             }
         }
-        buffer.append("-Xbootclasspath/a:");
-        buffer.append(securityManagerJarFile.toString());
-        buffer.append(
-                " -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
+        if (!generatePolicyOnly) {
+            DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
+            securityManagerArtifact.setGroupId("com.github.veithen");
+            securityManagerArtifact.setArtifactId("hermetic-security-manager");
+            securityManagerArtifact.setVersion("1.0.0");
+            securityManagerArtifact.setExtension("jar");
+            File securityManagerJarFile;
+            try {
+                DefaultProjectBuildingRequest projectBuildingRequest =
+                        new DefaultProjectBuildingRequest(session.getProjectBuildingRequest());
+                projectBuildingRequest.setRemoteRepositories(
+                        project.getPluginArtifactRepositories());
+                securityManagerJarFile =
+                        resolver.resolveArtifact(projectBuildingRequest, securityManagerArtifact)
+                                .getArtifact()
+                                .getFile();
+            } catch (ArtifactResolverException ex) {
+                throw new MojoFailureException("Unable to resolve artifact", ex);
+            }
+
+            buffer.append(" -Xbootclasspath/a:");
+            buffer.append(securityManagerJarFile.toString());
+            buffer.append(
+                    " -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
+        }
         // "==" sets the policy instead of adding additional permissions.
         buffer.append(" -Djava.security.policy==");
         buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
