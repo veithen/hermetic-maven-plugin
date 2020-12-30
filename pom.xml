@@ -172,6 +172,7 @@
                             <goals>
                                 <goal>verify</goal>
                             </goals>
+                            <streamLogs>true</streamLogs>
                         </configuration>
                     </execution>
                 </executions>
