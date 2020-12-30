@@ -132,7 +132,7 @@ public class PermissionTest {
     }
 
     @Test
-    public void test() {
+    public void testGetJdkExecutable() {
         assertThat(JavaEnvUtils.getJdkExecutable("javac")).isNotNull();
     }
 }
