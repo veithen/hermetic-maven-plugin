@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketPermission;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -90,26 +91,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "true", required = true)
     private boolean append;
 
-    private File getJdkHome() {
-        Log log = getLog();
-        String javaHomeProperty = System.getProperty("java.home");
-        if (log.isDebugEnabled()) {
-            log.debug("java.home = " + javaHomeProperty);
-        }
-        File javaHome = new File(javaHomeProperty);
-        String name = javaHome.getName();
-        // On Mac OS X there is no distinction between JRE and JDK and the directory is called
-        // "Home". In that case, some code in Ant tries to access sibling directories. Allow this.
-        File jdkHome =
-                name.equals("jre") || name.contentEquals("Home")
-                        ? javaHome.getParentFile()
-                        : javaHome;
-        if (log.isDebugEnabled()) {
-            log.debug("JDK home is " + jdkHome);
-        }
-        return jdkHome;
-    }
-
     private static boolean isDescendant(File dir, File path) {
         do {
             if (path.equals(dir)) {
@@ -142,8 +123,33 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out, log);
             writer.start();
-            File jdkHome = getJdkHome();
+
+            String javaHomeProperty = System.getProperty("java.home");
+            if (log.isDebugEnabled()) {
+                log.debug("java.home = " + javaHomeProperty);
+            }
+            File javaHome = new File(javaHomeProperty);
+            File jdkHome = javaHome.getName().equals("jre") ? javaHome.getParentFile() : javaHome;
+            if (log.isDebugEnabled()) {
+                log.debug("JDK home is " + jdkHome);
+            }
             writer.generateDirPermissions(jdkHome, Integer.MAX_VALUE, false);
+            if (jdkHome.equals(javaHome)) {
+                File parent = jdkHome.getParentFile();
+                // Ant may try to access various siblings of java.home (which should not exist if
+                // we get here). Allow this.
+                for (String f :
+                        Arrays.asList(
+                                "bin",
+                                "Classes",
+                                "Classes" + File.separator + "jce.jar",
+                                "Classes" + File.separator + "jsse.jar",
+                                "Classes" + File.separator + "classes.jar",
+                                "Classes" + File.separator + "ui.jar")) {
+                    writer.writePermission(
+                            new FilePermission(new File(parent, f).getAbsolutePath(), "read"));
+                }
+            }
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
                 List<File> dirs =

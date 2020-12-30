@@ -35,6 +35,7 @@ import java.util.Enumeration;
 
 import jakarta.xml.bind.JAXBContext;
 
+import org.apache.tools.ant.Project;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
@@ -134,5 +135,11 @@ public class PermissionTest {
     @Test
     public void testGetJdkExecutable() {
         assertThat(JavaEnvUtils.getJdkExecutable("javac")).isNotNull();
+    }
+
+    @Test
+    public void testAddJavaRuntime() {
+        org.apache.tools.ant.types.Path path = new org.apache.tools.ant.types.Path(new Project());
+        path.addJavaRuntime();
     }
 }
