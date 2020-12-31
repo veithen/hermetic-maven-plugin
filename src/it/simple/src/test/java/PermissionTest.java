@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Enumeration;
 
 import jakarta.xml.bind.JAXBContext;
 
@@ -90,12 +89,12 @@ public class PermissionTest {
         checkReadPermissions(javaHome.toPath());
     }
 
-    @Test(expected=SecurityException.class)
+    @Test(expected = SecurityException.class)
     public void testExternalURLAccess() throws Exception {
         new URL("http://www.google.com").openStream().close();
     }
 
-    @Test(expected=UnknownHostException.class)
+    @Test(expected = UnknownHostException.class)
     public void testInvalidHostname() throws Exception {
         new URL("http://rfc2606.invalid").openStream().close();
     }
@@ -104,19 +103,30 @@ public class PermissionTest {
     public void testLocalURLAccess() throws Exception {
         Server server = new Server();
         ServerConnector connector = new ServerConnector(server);
-        server.setConnectors(new Connector[] { connector });
+        server.setConnectors(new Connector[] {connector});
         server.start();
         try {
-            HttpURLConnection conn = (HttpURLConnection)new URL("http", "localhost", connector.getLocalPort(), "/").openConnection();
+            HttpURLConnection conn =
+                    (HttpURLConnection)
+                            new URL("http", "localhost", connector.getLocalPort(), "/")
+                                    .openConnection();
             conn.connect();
             assertThat(conn.getResponseCode()).isEqualTo(404);
             conn.disconnect();
 
-            for (NetworkInterface iface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+            for (NetworkInterface iface :
+                    Collections.list(NetworkInterface.getNetworkInterfaces())) {
                 for (InterfaceAddress ifaceAddr : iface.getInterfaceAddresses()) {
                     InetAddress addr = ifaceAddr.getAddress();
                     if (addr.isLoopbackAddress() || !addr.isLinkLocalAddress()) {
-                        conn = (HttpURLConnection)new URL("http", addr.getHostAddress(), connector.getLocalPort(), "/").openConnection();
+                        conn =
+                                (HttpURLConnection)
+                                        new URL(
+                                                        "http",
+                                                        addr.getHostAddress(),
+                                                        connector.getLocalPort(),
+                                                        "/")
+                                                .openConnection();
                         conn.connect();
                         assertThat(conn.getResponseCode()).isEqualTo(404);
                         conn.disconnect();
@@ -128,7 +138,7 @@ public class PermissionTest {
         }
     }
 
-    @Test(expected=SecurityException.class)
+    @Test(expected = SecurityException.class)
     public void testFileSystemAccess() throws Exception {
         new File(System.getProperty("user.home"), "somefile").listFiles();
     }
