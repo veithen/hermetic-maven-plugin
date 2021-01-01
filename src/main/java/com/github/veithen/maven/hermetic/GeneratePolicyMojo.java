@@ -29,6 +29,7 @@ import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketPermission;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -214,11 +215,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         }
 
         Properties props = project.getProperties();
-        StringBuilder buffer = new StringBuilder();
+        List<String> args = new ArrayList<>();
         if (append) {
             String currentValue = props.getProperty(property);
-            if (currentValue != null) {
-                buffer.append(currentValue);
+            if (currentValue != null && !currentValue.isEmpty()) {
+                args.add(currentValue);
             }
         }
         if (!generatePolicyOnly) {
@@ -241,18 +242,15 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 throw new MojoFailureException("Unable to resolve artifact", ex);
             }
 
-            buffer.append(" -Xbootclasspath/a:");
-            buffer.append(securityManagerJarFile.toString());
-            buffer.append(
-                    " -Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
+            args.add("-Xbootclasspath/a:" + securityManagerJarFile.toString());
+            args.add("-Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
         }
         // "==" sets the policy instead of adding additional permissions.
-        buffer.append(" -Djava.security.policy==");
-        buffer.append(outputFile.getAbsolutePath().replace('\\', '/'));
+        args.add("-Djava.security.policy==" + outputFile.getAbsolutePath().replace('\\', '/'));
         if (debug) {
-            buffer.append(" -Djava.security.debug=access,failure");
+            args.add("-Djava.security.debug=access,failure");
         }
-        String value = buffer.toString();
+        String value = String.join(" ", args);
         props.setProperty(property, value);
         log.info(String.format("%s set to %s", property, value));
     }
