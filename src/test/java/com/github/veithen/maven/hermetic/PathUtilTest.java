@@ -25,8 +25,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
@@ -34,7 +34,7 @@ import com.google.common.jimfs.Jimfs;
 public class PathUtilTest {
     private FileSystem fs;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         fs = Jimfs.newFileSystem(Configuration.unix());
     }

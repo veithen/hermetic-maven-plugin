@@ -18,6 +18,7 @@
  * #L%
  */
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ import org.apache.tools.ant.util.JavaEnvUtils;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class PermissionTest {
     @Test
@@ -89,14 +90,18 @@ public class PermissionTest {
         checkReadPermissions(javaHome.toPath());
     }
 
-    @Test(expected = SecurityException.class)
+    @Test
     public void testExternalURLAccess() throws Exception {
-        new URL("http://www.google.com").openStream().close();
+        assertThrows(
+                SecurityException.class,
+                () -> new URL("http://www.google.com").openStream().close());
     }
 
-    @Test(expected = UnknownHostException.class)
+    @Test
     public void testInvalidHostname() throws Exception {
-        new URL("http://rfc2606.invalid").openStream().close();
+        assertThrows(
+                UnknownHostException.class,
+                () -> new URL("http://rfc2606.invalid").openStream().close());
     }
 
     @Test
@@ -138,9 +143,11 @@ public class PermissionTest {
         }
     }
 
-    @Test(expected = SecurityException.class)
+    @Test
     public void testFileSystemAccess() throws Exception {
-        new File(System.getProperty("user.home"), "somefile").listFiles();
+        assertThrows(
+                SecurityException.class,
+                () -> new File(System.getProperty("user.home"), "somefile").listFiles());
     }
 
     @Test
