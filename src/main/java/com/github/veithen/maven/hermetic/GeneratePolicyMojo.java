@@ -165,7 +165,8 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                     writer.generateDirPermissions(dir, 1, false);
                 }
             }
-            writer.generateDirPermissions(new File(System.getProperty("maven.home")), 0, false);
+            writer.generateDirPermissions(
+                    new File(System.getProperty("maven.home")), Integer.MAX_VALUE, false);
             writer.generateDirPermissions(
                     new File(session.getSettings().getLocalRepository()), 0, false);
             writer.generateDirPermissions(projectDir, 0, false);
