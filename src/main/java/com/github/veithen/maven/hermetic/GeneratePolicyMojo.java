@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.InetAddress;
@@ -53,6 +54,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.transfer.artifact.DefaultArtifactCoordinate;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolver;
 import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverException;
+import org.codehaus.plexus.util.IOUtil;
 
 @Mojo(
         name = "generate-policy",
@@ -215,7 +217,13 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
             securityManagerArtifact.setGroupId("com.github.veithen");
             securityManagerArtifact.setArtifactId("hermetic-security-manager");
-            securityManagerArtifact.setVersion("1.2.0-SNAPSHOT");
+            try (InputStream in =
+                    GeneratePolicyMojo.class.getResourceAsStream(
+                            "hermetic-security-manager.version")) {
+                securityManagerArtifact.setVersion(IOUtil.toString(in, "utf-8"));
+            } catch (IOException ex) {
+                throw new MojoFailureException("Failed to read version information", ex);
+            }
             securityManagerArtifact.setExtension("jar");
             File securityManagerJarFile;
             try {

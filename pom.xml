@@ -56,6 +56,15 @@
         <auto-value.version>1.7.4</auto-value.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.veithen</groupId>
+                <artifactId>hermetic-security-manager</artifactId>
+                <version>1.2.0-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
@@ -144,6 +153,28 @@
                         </annotationProcessorPath>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.veithen.alta</groupId>
+                <artifactId>alta-maven-plugin</artifactId>
+                <version>0.7.1-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate-resources</goal>
+                        </goals>
+                        <configuration>
+                            <name>com/github/veithen/maven/hermetic/%artifactId%.version</name>
+                            <value>%baseVersion%</value>
+                            <artifactSet>
+                                <artifact>
+                                    <groupId>com.github.veithen</groupId>
+                                    <artifactId>hermetic-security-manager</artifactId>
+                                </artifact>
+                            </artifactSet>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>com.github.veithen.maven</groupId>
