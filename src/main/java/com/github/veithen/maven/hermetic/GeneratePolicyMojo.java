@@ -30,7 +30,6 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketPermission;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -60,6 +59,11 @@ import org.apache.maven.shared.transfer.artifact.resolve.ArtifactResolverExcepti
         defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES,
         threadSafe = true)
 public final class GeneratePolicyMojo extends AbstractMojo {
+    private static final String[] safeMethods = {
+        "org.apache.tools.ant.types.Path.addExisting",
+        "org.apache.tools.ant.util.JavaEnvUtils.getJdkExecutable",
+    };
+
     @Parameter(property = "project", readonly = true, required = true)
     private MavenProject project;
 
@@ -138,22 +142,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                 log.debug("JDK home is " + jdkHome);
             }
             writer.generateDirPermissions(jdkHome, Integer.MAX_VALUE, false);
-            if (jdkHome.equals(javaHome)) {
-                File parent = jdkHome.getParentFile();
-                // Ant may try to access various siblings of java.home (which should not exist if
-                // we get here). Allow this.
-                for (String f :
-                        Arrays.asList(
-                                "bin",
-                                "Classes",
-                                "Classes" + File.separator + "jce.jar",
-                                "Classes" + File.separator + "jsse.jar",
-                                "Classes" + File.separator + "classes.jar",
-                                "Classes" + File.separator + "ui.jar")) {
-                    writer.writePermission(
-                            new FilePermission(new File(parent, f).getAbsolutePath(), "read"));
-                }
-            }
             String extDirs = System.getProperty("java.ext.dirs");
             if (extDirs != null) {
                 List<File> dirs =
@@ -227,7 +215,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             DefaultArtifactCoordinate securityManagerArtifact = new DefaultArtifactCoordinate();
             securityManagerArtifact.setGroupId("com.github.veithen");
             securityManagerArtifact.setArtifactId("hermetic-security-manager");
-            securityManagerArtifact.setVersion("1.1.0");
+            securityManagerArtifact.setVersion("1.2.0-SNAPSHOT");
             securityManagerArtifact.setExtension("jar");
             File securityManagerJarFile;
             try {
@@ -245,6 +233,7 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
             args.add("-Xbootclasspath/a:" + securityManagerJarFile.toString());
             args.add("-Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
+            args.add("-Dhermetic.safeMethods=" + String.join(",", safeMethods));
         }
         // "==" sets the policy instead of adding additional permissions.
         args.add("-Djava.security.policy==" + outputFile.getAbsolutePath().replace('\\', '/'));
