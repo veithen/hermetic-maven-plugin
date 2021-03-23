@@ -53,7 +53,7 @@
         <github.repository>hermetic-maven-plugin</github.repository>
         <javaVersion>1.8</javaVersion>
         <maven.version>3.6.3</maven.version>
-        <auto-value.version>1.7.4</auto-value.version>
+        <auto-value.version>1.7.5</auto-value.version>
     </properties>
 
     <dependencyManagement>
