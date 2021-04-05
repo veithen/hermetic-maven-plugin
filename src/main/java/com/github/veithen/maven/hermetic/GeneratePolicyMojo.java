@@ -31,6 +31,7 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketPermission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -61,7 +62,7 @@ import org.codehaus.plexus.util.IOUtil;
         defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES,
         threadSafe = true)
 public final class GeneratePolicyMojo extends AbstractMojo {
-    private static final String[] safeMethods = {
+    private static final String[] defaultSafeMethods = {
         "org.apache.tools.ant.types.Path.addExisting",
         "org.apache.tools.ant.util.JavaEnvUtils.getJdkExecutable",
     };
@@ -86,6 +87,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", required = true)
     private boolean debug;
 
+    @Parameter private String[] safeMethods;
+
+    @Deprecated
     @Parameter(defaultValue = "false", required = true)
     private boolean allowExec;
 
@@ -241,7 +245,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
             args.add("-Xbootclasspath/a:" + securityManagerJarFile.toString());
             args.add("-Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
-            args.add("-Dhermetic.safeMethods=" + String.join(",", safeMethods));
+            List<String> allSafeMethods = new ArrayList<>(Arrays.asList(defaultSafeMethods));
+            if (safeMethods != null) {
+                allSafeMethods.addAll(Arrays.asList(safeMethods));
+            }
+            args.add("-Dhermetic.safeMethods=" + String.join(",", allSafeMethods));
         }
         // "==" sets the policy instead of adding additional permissions.
         args.add("-Djava.security.policy==" + outputFile.getAbsolutePath().replace('\\', '/'));
