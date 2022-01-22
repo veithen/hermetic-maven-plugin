@@ -36,6 +36,7 @@ import java.util.Collections;
 
 import jakarta.xml.bind.JAXBContext;
 
+import aQute.lib.io.IO;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.util.JavaEnvUtils;
 import org.eclipse.jetty.server.Connector;
@@ -164,5 +165,10 @@ public class PermissionTest {
     public void testAddJavaRuntime() {
         org.apache.tools.ant.types.Path path = new org.apache.tools.ant.types.Path(new Project());
         path.addJavaRuntime();
+    }
+
+    @Test
+    public void testGetJavaExecutablePath() throws Exception {
+        IO.getJavaExecutablePath("java");
     }
 }

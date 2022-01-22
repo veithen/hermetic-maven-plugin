@@ -66,6 +66,12 @@
             <version>1.10.12</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>aQute.libg</artifactId>
+            <version>6.1.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

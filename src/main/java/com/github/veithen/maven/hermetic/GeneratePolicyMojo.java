@@ -138,11 +138,14 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             PolicyWriter writer = new PolicyWriter(out, log);
             writer.start();
 
-            String javaHomeProperty = System.getProperty("java.home");
-            if (log.isDebugEnabled()) {
-                log.debug("java.home = " + javaHomeProperty);
+            // If the JAVA_HOME environment variable is set to a symlink, then the java.home system
+            // property will point to the target of the symlink, so we need to use the original
+            // JAVA_HOME value.
+            String javaHomeString = System.getenv("JAVA_HOME");
+            if (javaHomeString == null) {
+                javaHomeString = System.getProperty("java.home");
             }
-            File javaHome = new File(javaHomeProperty);
+            File javaHome = new File(javaHomeString);
             File jdkHome = javaHome.getName().equals("jre") ? javaHome.getParentFile() : javaHome;
             if (log.isDebugEnabled()) {
                 log.debug("JDK home is " + jdkHome);
