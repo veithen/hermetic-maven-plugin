@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.veithen</groupId>
         <artifactId>parent</artifactId>
-        <version>42</version>
+        <version>43</version>
     </parent>
 
     <groupId>com.github.veithen.maven</groupId>
@@ -193,6 +193,7 @@
             <plugin>
                 <groupId>com.github.veithen.maven</groupId>
                 <artifactId>resolver-proxy-maven-plugin</artifactId>
+                <version>0.3.0</version>
                 <executions>
                     <execution>
                         <goals>
