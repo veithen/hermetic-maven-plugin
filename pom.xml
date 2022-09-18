@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.veithen</groupId>
         <artifactId>parent</artifactId>
-        <version>43</version>
+        <version>44-SNAPSHOT</version>
     </parent>
 
     <groupId>com.github.veithen.maven</groupId>
@@ -214,7 +214,6 @@
                             <goals>
                                 <goal>verify</goal>
                             </goals>
-                            <streamLogs>true</streamLogs>
                         </configuration>
                     </execution>
                 </executions>
