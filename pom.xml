@@ -54,7 +54,7 @@
         <javaVersion>1.8</javaVersion>
         <project.build.outputTimestamp>2022-01-29T21:02:00Z</project.build.outputTimestamp>
         <maven.version>3.8.6</maven.version>
-        <auto-value.version>1.9</auto-value.version>
+        <auto-value.version>1.10</auto-value.version>
     </properties>
 
     <dependencyManagement>
