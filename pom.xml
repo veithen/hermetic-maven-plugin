@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.github.veithen</groupId>
         <artifactId>parent</artifactId>
-        <version>45-SNAPSHOT</version>
+        <version>45</version>
     </parent>
 
     <groupId>com.github.veithen.maven</groupId>
