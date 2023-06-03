@@ -19,7 +19,7 @@
  */
 package com.github.veithen.maven.hermetic;
 
-import static com.google.common.truth.Truth.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -50,7 +50,8 @@ public class PathUtilTest {
         Path symlink = extDir.resolve("libdummy.dylib");
         Files.createSymbolicLink(symlink, lib);
         assertThat(PathUtil.enumeratePaths(extDir, 1))
-                .containsExactly(PathSpec.create(extDir, 0, true), PathSpec.create(lib, 1, false));
+                .containsExactlyInAnyOrder(
+                        PathSpec.create(extDir, 0, true), PathSpec.create(lib, 1, false));
     }
 
     @Test
@@ -65,14 +66,15 @@ public class PathUtilTest {
         Files.createFile(cacerts);
         Files.createSymbolicLink(symlink, cacerts);
         assertThat(PathUtil.enumeratePaths(javaHome, Integer.MAX_VALUE))
-                .containsExactly(
+                .containsExactlyInAnyOrder(
                         PathSpec.create(javaHome, 0, true), PathSpec.create(cacerts, 4, false));
     }
 
     @Test
     public void testNonExistingDirectory() throws Exception {
         Path dir = fs.getPath("/Users/dummy/Library/Java/Extensions");
-        assertThat(PathUtil.enumeratePaths(dir, 0)).containsExactly(PathSpec.create(dir, 0, true));
+        assertThat(PathUtil.enumeratePaths(dir, 0))
+                .containsExactlyInAnyOrder(PathSpec.create(dir, 0, true));
     }
 
     @Test
@@ -83,7 +85,8 @@ public class PathUtilTest {
         Files.createDirectory(target);
         Files.createSymbolicLink(dir.resolve("link"), target);
         assertThat(PathUtil.enumeratePaths(dir, Integer.MAX_VALUE))
-                .containsExactly(PathSpec.create(dir, 0, true), PathSpec.create(target, 1, true));
+                .containsExactlyInAnyOrder(
+                        PathSpec.create(dir, 0, true), PathSpec.create(target, 1, true));
     }
 
     @Test
@@ -91,7 +94,8 @@ public class PathUtilTest {
         Path dir = fs.getPath("/dir");
         Files.createDirectories(dir);
         Files.createSymbolicLink(dir.resolve("link"), fs.getPath("/some/target"));
-        assertThat(PathUtil.enumeratePaths(dir, 0)).containsExactly(PathSpec.create(dir, 0, true));
+        assertThat(PathUtil.enumeratePaths(dir, 0))
+                .containsExactlyInAnyOrder(PathSpec.create(dir, 0, true));
     }
 
     @Test
@@ -103,7 +107,7 @@ public class PathUtilTest {
         Files.createSymbolicLink(var, privateVar);
         Path tmp = var.resolve("tmp");
         assertThat(PathUtil.enumeratePaths(tmp, 0))
-                .containsExactly(
+                .containsExactlyInAnyOrder(
                         PathSpec.create(tmp, 0, true), PathSpec.create(privateVarTmp, 0, true));
     }
 }
