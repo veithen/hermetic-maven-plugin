@@ -29,7 +29,7 @@
 
     <groupId>com.github.veithen.maven</groupId>
     <artifactId>hermetic-maven-plugin</artifactId>
-    <version>0.6.3-SNAPSHOT</version>
+    <version>0.7.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <url>https://github.com/veithen/hermetic-maven-plugin</url>
@@ -51,7 +51,7 @@
 
     <properties>
         <github.repository>hermetic-maven-plugin</github.repository>
-        <javaVersion>1.8</javaVersion>
+        <javaVersion>11</javaVersion>
         <project.build.outputTimestamp>2022-01-29T21:02:00Z</project.build.outputTimestamp>
         <maven.version>3.9.2</maven.version>
         <auto-value.version>1.10</auto-value.version>
