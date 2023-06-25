@@ -67,6 +67,12 @@ public final class GeneratePolicyMojo extends AbstractMojo {
         "org.apache.tools.ant.util.JavaEnvUtils.getJdkExecutable",
     };
 
+    private static final String[] miscFiles = {
+        // The Maven version distributed with RHEL uses a modified Apache HttpClient that reads this
+        // file.
+        "/usr/share/publicsuffix/effective_tld_names.dat",
+    };
+
     @Parameter(property = "project", readonly = true, required = true)
     private MavenProject project;
 
@@ -191,6 +197,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             // Some code (like maven-bundle-plugin) uses File#isDirectory() on the home directory.
             // Allow this, but don't allow access to other files.
             writer.writePermission(new FilePermission(System.getProperty("user.home"), "read"));
+            for (String file : miscFiles) {
+                if (new File(file).exists()) {
+                    writer.writePermission(new FilePermission(file, "read"));
+                }
+            }
             writer.writePermission(
                     new SocketPermission("localhost", "connect,listen,accept,resolve"));
             for (NetworkInterface iface :
