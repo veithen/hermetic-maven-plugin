@@ -52,7 +52,7 @@
         <javaVersion>11</javaVersion>
         <project.build.outputTimestamp>2023-06-25T21:48:21Z</project.build.outputTimestamp>
         <maven.version>3.9.6</maven.version>
-        <auto-value.version>1.10</auto-value.version>
+        <auto-value.version>1.10.4</auto-value.version>
     </properties>
 
     <dependencyManagement>
