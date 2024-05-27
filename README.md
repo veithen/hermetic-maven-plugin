@@ -1,6 +1,6 @@
 # hermetic-maven-plugin
 
-This Maven plugin configures the Maven build so that tests are executed hermetically, i.e. without access to remote resources and files outside of the project directory. To achieve this the plugin generates a Java 2 security policy and configures a custom security manager. By default the corresponding command line arguments are added to the `argLine` property so that they are picked up by [maven-surefire-plugin](http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html#argLine).
+This Maven plugin configures the Maven build so that tests are executed hermetically, i.e. without access to remote resources. To achieve this the plugin generates a Java 2 security policy and configures a custom security manager. By default the corresponding command line arguments are added to the `argLine` property so that they are picked up by [maven-surefire-plugin](http://maven.apache.org/surefire/maven-surefire-plugin/test-mojo.html#argLine).
 
 ## Making maven-invoker-plugin executions hermetic
 

@@ -35,11 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
@@ -62,17 +58,6 @@ import org.codehaus.plexus.util.IOUtil;
         defaultPhase = LifecyclePhase.GENERATE_TEST_RESOURCES,
         threadSafe = true)
 public final class GeneratePolicyMojo extends AbstractMojo {
-    private static final String[] defaultSafeMethods = {
-        "org.apache.tools.ant.types.Path.addExisting",
-        "org.apache.tools.ant.util.JavaEnvUtils.getJdkExecutable",
-    };
-
-    private static final String[] miscFiles = {
-        // The Maven version distributed with RHEL uses a modified Apache HttpClient that reads this
-        // file.
-        "/usr/share/publicsuffix/effective_tld_names.dat",
-    };
-
     @Parameter(property = "project", readonly = true, required = true)
     private MavenProject project;
 
@@ -99,9 +84,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", required = true)
     private boolean allowExec;
 
-    @Parameter(defaultValue = "false", required = true)
-    private boolean allowCrossProjectAccess;
-
     @Parameter(defaultValue = "argLine", required = true)
     private String property;
 
@@ -111,16 +93,6 @@ public final class GeneratePolicyMojo extends AbstractMojo {
     @Parameter(defaultValue = "false", required = true)
     private boolean generatePolicyOnly;
 
-    private static boolean isDescendant(File dir, File path) {
-        do {
-            if (path.equals(dir)) {
-                return true;
-            }
-            path = path.getParentFile();
-        } while (path != null);
-        return false;
-    }
-
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Log log = getLog();
@@ -129,79 +101,11 @@ public final class GeneratePolicyMojo extends AbstractMojo {
             return;
         }
 
-        File projectDir = project.getBasedir();
-        if (allowCrossProjectAccess) {
-            File dir = projectDir;
-            while ((dir = dir.getParentFile()) != null) {
-                if (new File(dir, "pom.xml").exists()) {
-                    projectDir = dir;
-                }
-            }
-        }
-
         outputFile.getParentFile().mkdirs();
         try (Writer out = new OutputStreamWriter(new FileOutputStream(outputFile), "utf-8")) {
             PolicyWriter writer = new PolicyWriter(out, log);
             writer.start();
 
-            // If the JAVA_HOME environment variable is set to a symlink, then the java.home system
-            // property will point to the target of the symlink, so we need to use the original
-            // JAVA_HOME value.
-            String javaHomeString = System.getenv("JAVA_HOME");
-            if (javaHomeString == null) {
-                javaHomeString = System.getProperty("java.home");
-            }
-            File javaHome = new File(javaHomeString);
-            File jdkHome = javaHome.getName().equals("jre") ? javaHome.getParentFile() : javaHome;
-            if (log.isDebugEnabled()) {
-                log.debug("JDK home is " + jdkHome);
-            }
-            writer.generateDirPermissions(jdkHome, Integer.MAX_VALUE, false);
-            String extDirs = System.getProperty("java.ext.dirs");
-            if (extDirs != null) {
-                List<File> dirs =
-                        Stream.of(extDirs.split(Pattern.quote(File.pathSeparator)))
-                                .map(File::new)
-                                .filter(dir -> !isDescendant(jdkHome, dir))
-                                .collect(Collectors.toList());
-                for (File dir : dirs) {
-                    writer.generateDirPermissions(dir, 1, false);
-                }
-            }
-            writer.generateDirPermissions(
-                    new File(System.getProperty("maven.home")), Integer.MAX_VALUE, false);
-            writer.generateDirPermissions(
-                    new File(session.getSettings().getLocalRepository()), 0, false);
-            writer.generateDirPermissions(projectDir, 0, false);
-            writer.writePermission(
-                    new FilePermission(
-                            session.getRequest().getUserToolchainsFile().getAbsolutePath(),
-                            "read"));
-            for (MavenProject project : session.getProjects()) {
-                File file = project.getArtifact().getFile();
-                if (file != null) {
-                    writer.writePermission(new FilePermission(file.getAbsolutePath(), "read"));
-                }
-                for (Artifact attachedArtifact : project.getAttachedArtifacts()) {
-                    writer.writePermission(
-                            new FilePermission(
-                                    attachedArtifact.getFile().getAbsolutePath(), "read"));
-                }
-            }
-            for (String dir :
-                    new String[] {
-                        project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir")
-                    }) {
-                writer.generateDirPermissions(new File(dir), 0, true);
-            }
-            // Some code (like maven-bundle-plugin) uses File#isDirectory() on the home directory.
-            // Allow this, but don't allow access to other files.
-            writer.writePermission(new FilePermission(System.getProperty("user.home"), "read"));
-            for (String file : miscFiles) {
-                if (new File(file).exists()) {
-                    writer.writePermission(new FilePermission(file, "read"));
-                }
-            }
             writer.writePermission(
                     new SocketPermission("localhost", "connect,listen,accept,resolve"));
             for (NetworkInterface iface :
@@ -215,8 +119,18 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                     }
                 }
             }
-            if (allowExec) {
-                writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
+            writer.writePermission(
+                    new FilePermission(
+                            "<<ALL FILES>>",
+                            allowExec ? "read,readlink,execute" : "read,readlink"));
+            for (String dir :
+                    new String[] {
+                        project.getBuild().getDirectory(), System.getProperty("java.io.tmpdir")
+                    }) {
+                writer.writePermission(new FilePermission(dir, "read,readlink,write"));
+                writer.writePermission(
+                        new FilePermission(
+                                new File(dir, "-").toString(), "read,readlink,write,delete"));
             }
             writer.end();
         } catch (IOException ex) {
@@ -259,11 +173,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
 
             args.add("-Xbootclasspath/a:" + securityManagerJarFile.toString());
             args.add("-Djava.security.manager=com.github.veithen.hermetic.HermeticSecurityManager");
-            List<String> allSafeMethods = new ArrayList<>(Arrays.asList(defaultSafeMethods));
             if (safeMethods != null) {
-                allSafeMethods.addAll(Arrays.asList(safeMethods));
+                args.add("-Dhermetic.safeMethods=" + String.join(",", Arrays.asList(safeMethods)));
             }
-            args.add("-Dhermetic.safeMethods=" + String.join(",", allSafeMethods));
         }
         // "==" sets the policy instead of adding additional permissions.
         args.add("-Djava.security.policy==" + outputFile.getAbsolutePath().replace('\\', '/'));

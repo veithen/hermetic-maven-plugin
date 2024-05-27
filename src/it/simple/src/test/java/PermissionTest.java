@@ -145,13 +145,6 @@ public class PermissionTest {
     }
 
     @Test
-    public void testFileSystemAccess() throws Exception {
-        assertThrows(
-                SecurityException.class,
-                () -> new File(System.getProperty("user.home"), "somefile").listFiles());
-    }
-
-    @Test
     public void testUserHomeDirectoryCheck() throws Exception {
         new File(System.getProperty("user.home")).isDirectory();
     }

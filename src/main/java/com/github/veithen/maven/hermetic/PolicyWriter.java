@@ -19,8 +19,6 @@
  */
 package com.github.veithen.maven.hermetic;
 
-import java.io.File;
-import java.io.FilePermission;
 import java.io.IOException;
 import java.io.Writer;
 import java.security.Permission;
@@ -68,22 +66,6 @@ final class PolicyWriter {
                 permission.getClass().getName(),
                 permission.getName(),
                 actions.isEmpty() ? null : actions);
-    }
-
-    void generateDirPermissions(File dir, int maxDepth, boolean allowWrite) throws IOException {
-        String rootActions = allowWrite ? "read,readlink,write" : "read,readlink";
-        String actions = allowWrite ? "read,readlink,write,delete" : "read,readlink";
-        for (PathSpec pathSpec :
-                PathUtil.enumeratePaths(dir.getAbsoluteFile().toPath(), maxDepth)) {
-            writePermission(
-                    new FilePermission(
-                            pathSpec.path().toString(),
-                            pathSpec.depth() == 0 ? rootActions : actions));
-            if (pathSpec.directory()) {
-                writePermission(
-                        new FilePermission(pathSpec.path().resolve("-").toString(), actions));
-            }
-        }
     }
 
     void end() throws IOException {
