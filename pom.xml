@@ -145,13 +145,6 @@
                 <configuration>
                     <allowExec>true</allowExec>
                 </configuration>
-                <!-- TODO: remove this when a new release is available -->
-                <executions>
-                    <execution>
-                        <id>default</id>
-                        <phase>none</phase>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>com.github.veithen.maven</groupId>
