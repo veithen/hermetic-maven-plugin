@@ -70,7 +70,7 @@ jobs:
     - name: Deploy
       run: mvn -B -e -Prelease -Dgpg.skip=true -DskipTests=true deploy
       env:
-        OSSRH_USERNAME: veithen
+        OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
     - name: Remove Snapshots
       run: find ~/.m2/repository -name '*-SNAPSHOT' -a -type d -print0 | xargs -0 rm -rf
