@@ -51,7 +51,7 @@
         <github.repository>hermetic-maven-plugin</github.repository>
         <javaVersion>11</javaVersion>
         <project.build.outputTimestamp>2024-05-27T20:36:56Z</project.build.outputTimestamp>
-        <maven.version>3.9.8</maven.version>
+        <maven.version>3.9.9</maven.version>
     </properties>
 
     <dependencyManagement>
