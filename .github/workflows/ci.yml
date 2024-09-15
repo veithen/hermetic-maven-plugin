@@ -68,7 +68,7 @@ jobs:
         server-username: OSSRH_USERNAME
         server-password: OSSRH_PASSWORD
     - name: Deploy
-      run: mvn -B -e -Prelease -Dgpg.skip=true -DskipTests=true deploy
+      run: mvn -B -e -Prelease -Dgpg.skip=true -Dmaven.test.skip=true deploy
       env:
         OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
         OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
