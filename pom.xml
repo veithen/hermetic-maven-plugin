@@ -179,7 +179,6 @@
                 <artifactId>license-maven-plugin</artifactId>
                 <configuration>
                     <projectName>hermetic-maven-plugin</projectName>
-                    <licenseName>apache_v2</licenseName>
                 </configuration>
             </plugin>
         </plugins>
