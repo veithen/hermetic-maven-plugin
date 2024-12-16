@@ -119,12 +119,9 @@ public final class GeneratePolicyMojo extends AbstractMojo {
                     }
                 }
             }
-            writer.writePermission(
-                    new FilePermission(
-                            "<<ALL FILES>>",
-                            allowExec
-                                    ? "read,readlink,write,delete,execute"
-                                    : "read,readlink,write,delete"));
+            if (allowExec) {
+                writer.writePermission(new FilePermission("<<ALL FILES>>", "execute"));
+            }
             writer.end();
         } catch (IOException ex) {
             throw new MojoFailureException(String.format("Failed to write %s", outputFile), ex);
